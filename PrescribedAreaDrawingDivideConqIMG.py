@@ -2,7 +2,7 @@
 #install it.. in anaconda you can use this '-c omnia quadprog '
 import numpy as np
 import random
-import quadprog
+#import quadprog
 import multiprocessing as mp
 from sympy.geometry import *
 from PIL import Image, ImageDraw
@@ -38,7 +38,7 @@ class node:
 # the name of a node at point i,j is ij
 
 
-#python PrescribedAreaDrawingDivideConqIMG.py 32 "input/PBLH_10_new_grid32_32.txt" "DivCon_PBLH_10_32_32"
+#python PrescribedAreaDrawingDivideConqIMG.py 32 "input/PBLH_10_new_grid32_32.txt" "DivConImg_PBLH_10_new_grid32_32"
 # First param = python file name
 # Second Param = square grid
 # Third Param = Input Data File
@@ -547,9 +547,11 @@ if __name__ == "__main__":
 
             #
             all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, output_img_filename, x+1, stg, preprocessing_time)
+            '''
             if stg > 3:
                 imageDraw(input_image, nodes, "output_" + output_img_filename + "_Stage" + str(stg+1) + "_It" + str(x+1),
                       grid_count_horizontal, grid_count_vertical)
+            '''
         #poly_draw(output_img_filename, "_stage" + str(stg) + "_after", output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
 
 

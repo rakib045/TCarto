@@ -2,7 +2,7 @@
 #install it.. in anaconda you can use this '-c omnia quadprog '
 import numpy as np
 import random
-import quadprog
+#import quadprog
 import multiprocessing as mp
 from sympy.geometry import *
 from PIL import Image, ImageDraw
@@ -36,7 +36,7 @@ class node:
 # the following loop creates a bunch of nodes, each at point i,j
 # the name of a node at point i,j is ij
 
-#python PrescribedAreaDrawingParallelCode.py 8 5 "input/data_cat_8_8.txt" "ParallelCode_Gaussian_8_8"
+#python PrescribedAreaDrawingParallelCode.py 64 5 "input/PBLH_10_new_grid64_64.txt" "ParallelThread_PBLH_10_new_grid64_64"
 # First param = python file name
 # Second Param = square grid
 # Third Param = Count of Iteration

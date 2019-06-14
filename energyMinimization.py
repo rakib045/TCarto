@@ -1,7 +1,7 @@
 import cvxopt
 import numpy as np
 import random
-import quadprog
+#import quadprog
 from sympy.geometry import *
 from time import time
 from PIL import Image, ImageDraw
@@ -69,7 +69,7 @@ def read_text_file(input_data_file, grid_horiz, grid_vert):
     return values
 
 ################### Read From Input File #######################
-
+'''
 def quadprog_solve_qp(P, q, G=None, h=None, A=None, b=None):
     qp_G = .5 * (P + P.T)   # make sure P is symmetric
     qp_a = -q
@@ -89,7 +89,7 @@ def quadprog_solve_qp(P, q, G=None, h=None, A=None, b=None):
         print("Error")
         output = [-1, -1]
     return output
-
+'''
 def cvxopt_solve_qp(P, q, G=None, h=None, A=None, b=None):
     P = .5 * (P + P.T)  # make sure P is symmetric
     args = [matrix(P), matrix(q)]

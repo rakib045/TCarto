@@ -30,13 +30,20 @@ It means the targeted weights or area values of the output 2x2 cartogram would b
 'python <python_file_of_expected_algorithm> <number_of_squared_grid> <input_data_file> <output_log_and_image_filename>
 for example, 'python PrescribedAreaDrawingDivideConq.py 64 "input/PBLH_10_new_grid64_64.txt" "DivCon_PBLH_10_new_grid64_64"'
 
-python_file_of_expected_algorithm -> There are four python files here to run : PrescribedAreaDrawing.py is the single threaded code, PrescribedAreaDrawingParallelCode.py is for parallel programming with two phases, PrescribedAreaDrawingDivideConq.py is for parallel programming with divide and conquer strategy, PrescribedAreaDrawingDivideConqIMG.py is similar like PrescribedAreaDrawingDivideConq.py but it takes another image file hardcodedly inside code, applies DIV-CON technique on top of that image file and provides distorted image file.
+python_file_of_expected_algorithm -> There are two python files here to run : PrescribedAreaDrawingDivideConq.py is for parallel programming with divide and conquer strategy, PrescribedAreaDrawingDivideConqIMG.py is similar like PrescribedAreaDrawingDivideConq.py but it takes another image file hard codedly inside code, applies DIV-CON technique on top of that image file and provides the output of the distorted image file.
 
 number_of_squared_grid -> Total number of grid for square shape
 
 input_data_file -> A (.txt) file as an input data file having weights of each and every cells of the cartogram
 
 output_log_and_image_filename -> This is just the filename for the output image and output log file
+
+'python <python_file_of_expected_algorithm> <number_of_squared_grid> <number_of_iteration> <input_data_file> <output_log_and_image_filename>
+for example, 'python PrescribedAreaDrawingParallelCode.py 64 5 "input/PBLH_10_new_grid64_64.txt" "DivCon_PBLH_10_new_grid64_64"'
+
+python_file_of_expected_algorithm -> PrescribedAreaDrawingParallelCode.py is for parallel programming with two phases and PrescribedAreaDrawing.py is for the single threaded code.
+
+number_of_iteration -> Total number of iteration
 
 5. You can also use script file to run multiple command at the same time.
   For windows: 

@@ -2,7 +2,7 @@
 #install it.. in anaconda you can use this '-c omnia quadprog '
 import numpy as np
 import random
-import quadprog
+#import quadprog
 from sympy.geometry import *
 from PIL import Image, ImageDraw
 import matplotlib.pyplot as plt
@@ -34,7 +34,7 @@ class node:
 # the name of a node at point i,j is ij
 
 
-#python PrescribedAreaDrawing.py 8 5 "input/data_cat_8_8.txt" "SingleThread_Gaussian_8_8"
+#python PrescribedAreaDrawing.py 64 5 "input/PBLH_10_new_grid64_64.txt" "SingleThread_PBLH_10_new_grid64_64"
 # First param = python file name
 # Second Param = square grid
 # Third Param = Count of Iteration
