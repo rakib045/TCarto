@@ -49,9 +49,9 @@ input_data_file = sys.argv[2]
 output_img_filename = sys.argv[3]
 
 '''
-square_grid = 16
-input_data_file = "input/surface_skin_temp_16_16.txt"
-output_img_filename = "DivideAndConq_Weather_16_16"
+square_grid = 64
+input_data_file = "input/Aggregation_cluster_3_grid_64_64.txt"
+output_img_filename = "DivideAndConq_Aggregation_cluster_3_grid_64_64"
 '''
 
 grid_count_horizontal_actual = square_grid
@@ -373,34 +373,6 @@ if __name__ == "__main__":
         "Preprocess the data once at each stage\n")
     output_txt_file.write("Stage, Iteration, |UV-EV|/EV, UV/EV - 1, RMSE, MQE = (((|UV-EV|/EV) ** 2) ** 0.5)/N, Updated MQE = (((|UV-EV|/(UV+EV)) ** 2) ** 0.5)/N, Pre processing Time(sec), Iteration Time(sec)\n")
     output_txt_file.close()
-
-    '''
-    splitted_image = []
-    input_image = Image.open(input_img_file)
-    input_image = input_image.convert("RGBA")
-
-    print(input_image.format, input_image.size, input_image.mode)
-    # input_image.show()
-
-    for i in range(grid_count_horizontal_actual):
-        im = []
-        for j in range(grid_count_vertical_actual):
-            block_width = input_image.size[0] / grid_count_horizontal_actual
-            block_height = input_image.size[1] / grid_count_vertical_actual
-            upper_left_x = i * block_width
-            upper_left_y = j * block_height
-            lower_right_x = upper_left_x + block_width
-            lower_right_y = upper_left_y + block_height
-
-            sub_image = input_image.crop((upper_left_x, upper_left_y, lower_right_x, lower_right_y))
-
-            # sub_image.save("output/image/input_" + str(i) + "_" + str(j) + ".png", "PNG")
-            im.append(sub_image)
-        splitted_image.append(im)
-
-    #imageDraw(input_image.size, splitted_image, nodes, "input", grid_count_horizontal_actual, grid_count_vertical_actual)
-    output_image_size = input_image.size
-    '''
 
     stage_count = int(m.log(grid_count_horizontal_actual, 2))
     ######## Node Generation ########

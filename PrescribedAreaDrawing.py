@@ -82,12 +82,6 @@ nodes = grid_node_generation(node, grid_count_horizontal, grid_count_vertical)
 ##### Reading from Input File ###########
 values = read_text_file(input_data_file, grid_count_horizontal, grid_count_vertical)
 
-'''
-print("Values: ")
-print(values)
-print("Sum: ")
-print(np.sum(values))
-'''
 
 #nodes that should not move
 nodes[0][0].movable = False
@@ -96,35 +90,7 @@ nodes[grid_count_horizontal][0].movable = False
 nodes[grid_count_horizontal][grid_count_vertical].movable = False
 #print(nodes)
 
-###  Image splitting into grid #########
-'''
-input_image = Image.open(input_img_file)
-input_image = input_image.convert("RGBA")
 
-print(input_image.format, input_image.size, input_image.mode)
-#input_image.show()
-splitted_image = []
-
-for i in range(grid_count_horizontal):
-    im = []
-    for j in range(grid_count_vertical):
-        block_width = input_image.size[0] / grid_count_horizontal
-        block_height = input_image.size[1] / grid_count_vertical
-        upper_left_x = i * block_width
-        upper_left_y = j * block_height
-        lower_right_x = upper_left_x + block_width
-        lower_right_y = upper_left_y + block_height
-
-        sub_image = input_image.crop((upper_left_x, upper_left_y, lower_right_x, lower_right_y))
-
-        #sub_image.save("output/image/input_" + str(i) + "_" + str(j) + ".png", "PNG")
-        im.append(sub_image)
-    splitted_image.append(im)
-    
-imageDraw(input_image.size, splitted_image, nodes, "input", grid_count_horizontal, grid_count_vertical)
-output_image_size = input_image.size
-
-'''
 #####################################################################################
 
 

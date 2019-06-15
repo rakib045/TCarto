@@ -476,17 +476,6 @@ if __name__ == "__main__":
             print('iteration: ' + str(x+1) + '(out of ' + str(iteration) + '): ')
 
             iteration_start_time = time()
-            '''
-            print(point_to_be_changed_array)
-            point_to_be_changed_array = [[[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5]],
-                                         [[1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5]],
-                                         [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [2, 5]],
-                                         [[3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [3, 5]],
-                                         [[4, 0], [4, 1], [4, 2], [4, 3], [4, 4], [4, 5]],
-                                         [[5, 0], [5, 1], [5, 2], [5, 3], [5, 4], [5, 5]],
-                                         [[6, 0], [6, 1], [6, 2], [6, 3], [6, 4], [6, 5]],
-                                         [[7, 0], [7, 1], [7, 2], [7, 3], [7, 4], [7, 5]]]
-            '''
 
             pool = mp.Pool(cpu_count)
             thread_result = []
@@ -547,12 +536,8 @@ if __name__ == "__main__":
 
             #
             all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, output_img_filename, x+1, stg, preprocessing_time)
-            '''
-            if stg > 3:
-                imageDraw(input_image, nodes, "output_" + output_img_filename + "_Stage" + str(stg+1) + "_It" + str(x+1),
-                      grid_count_horizontal, grid_count_vertical)
-            '''
-        #poly_draw(output_img_filename, "_stage" + str(stg) + "_after", output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
+
+        poly_draw(output_img_filename, "_stage" + str(stg) + "_after", output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
 
 
 

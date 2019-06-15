@@ -23,6 +23,10 @@ from sympy.plotting import plot
 #https://scaron.info/blog/quadratic-programming-in-python.html
 #Jyoti: This link had a problem and I emailed the author to fix, and I think they fixed that now; anyways - what I did below is correct - so no worries
 
+#imp_cell_threshold = 1.25
+imp_cell_threshold = 100
+
+
 ###################  Grid Generation ###########################
 
 def grid_node_generation(node, grid_horiz, grid_vert):
@@ -167,29 +171,6 @@ def updateNode(nodes_array, values_array):
     ################# Rakib's Code ####################
 
     #Neighbourhood Point Construction
-    '''
-    p_top_left = nodes[i-1][j+1]
-    p_left = nodes[i-1][j]
-    p_bottom_left = nodes[i-1][j-1]
-
-    p_top = nodes[i][j+1]
-    p_middle = nodes[i][j]
-    p_bottom = nodes[i][j-1]
-
-    p_top_right = nodes[i+1][j+1]
-    p_right = nodes[i+1][j]
-    p_bottom_right = nodes[i+1][j-1]
-
-    # | val_TL | val_TR |
-    # | val_BL | val_BR |
-
-    #Neighbourhood Area construction
-    val_TL = values[i-1][j]
-    val_TR = values[i][j]
-    val_BL = values[i-1][j-1]
-    val_BR = values[i][j-1]
-    '''
-
 
     p_top_left = nodes_array[0]
     p_left = nodes_array[1]
@@ -531,46 +512,6 @@ def updateNode(nodes_array, values_array):
     #output = quadprog_solve_qp(P, q, G, h)
     output = cvxopt_solve_qp(P, q, G, h)
 
-    '''
-    #print(p_middle.loc)
-    if i == 5 and j == 7:
-        print(p_middle.loc)
-
-        print(p_bottom.loc)
-        print(p_bottom_left.loc)
-        print(p_left.loc)
-
-        print(p_top_left.loc)
-        print(p_top.loc)
-        print(p_top_right.loc)
-
-        print(p_right.loc)
-        print(p_bottom_right.loc)
-
-        print(G)
-        print(h)
-        print(output)
-        
-        if not np.array_equal(h, h1):
-            print("h( " + str(i) + "," + str(j) + ") = \n")
-            print(h)
-            print(h1)
-        if not np.array_equal(G, G1):
-            print("G( " + str(i) + "," + str(j) + ") = \n")
-            print(G)
-            print(G1)
-        
-        if not np.array_equal(q1, q):
-            print("q( " + str(i) + "," + str(j) + ") = \n")
-            print(q)
-            print(q1)
-
-        if not np.array_equal(P1, P):
-            print("P( " + str(i) + "," + str(j) + ") = \n")
-            print(P)
-            print(P1)
-        '''
-
     point_min_distance = 0.05
     if pointDist(p_left.loc[0], p_left.loc[1], output[0], output[1]) < point_min_distance:
         return Point(-1, -1)
@@ -583,8 +524,6 @@ def updateNode(nodes_array, values_array):
 
     if pointDist(p_bottom.loc[0], p_bottom.loc[1], output[0], output[1]) < point_min_distance:
         return Point(-1, -1)
-
-
 
     poly = Polygon((p_top.loc[0], p_top.loc[1]), (p_left.loc[0], p_left.loc[1]), (p_bottom.loc[0], p_bottom.loc[1]),
                    (p_right.loc[0], p_right.loc[1]))
@@ -708,6 +647,17 @@ def poly_draw(filename, it, im_size, nodes, grid_count_horizontal, grid_count_ve
 
     for i in range(grid_count_horizontal):
         for j in range(grid_count_vertical, 0, -1):
+            pol = Polygon(Point2D(nodes[i][j].loc.x, (grid_count_vertical - nodes[i][j].loc.y)),
+                          Point2D(nodes[i][j - 1].loc.x, (grid_count_vertical - nodes[i][j - 1].loc.y)),
+                          Point2D(nodes[i + 1][j - 1].loc.x, (grid_count_vertical - nodes[i + 1][j - 1].loc.y)),
+                          Point2D(nodes[i+1][j].loc.x, (grid_count_vertical - nodes[i+1][j].loc.y)))
+            area = abs(pol.area)
+
+            if area > imp_cell_threshold:
+                colour = ["green", "yellow"]
+            else:
+                colour = ["red", "blue"]
+
             d.polygon([tuple(Point2D(nodes[i][j].loc.x * factor_x, (grid_count_vertical - nodes[i][j].loc.y) * factor_y))
                           , tuple(Point2D(nodes[i][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i][j - 1].loc.y) * factor_y))
                           , tuple(Point2D(nodes[i + 1][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i + 1][j - 1].loc.y) * factor_y))

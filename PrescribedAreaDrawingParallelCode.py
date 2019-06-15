@@ -378,35 +378,6 @@ if __name__ == "__main__":
     nodes[grid_count_horizontal][grid_count_vertical].movable = False
     # print(nodes)
 
-    ###  Image splitting into grid #########
-
-    '''
-    splitted_image = []
-    input_image = Image.open(input_img_file)
-    input_image = input_image.convert("RGBA")
-
-    print(input_image.format, input_image.size, input_image.mode)
-    # input_image.show()
-
-    for i in range(grid_count_horizontal):
-        im = []
-        for j in range(grid_count_vertical):
-            block_width = input_image.size[0] / grid_count_horizontal
-            block_height = input_image.size[1] / grid_count_vertical
-            upper_left_x = i * block_width
-            upper_left_y = j * block_height
-            lower_right_x = upper_left_x + block_width
-            lower_right_y = upper_left_y + block_height
-
-            sub_image = input_image.crop((upper_left_x, upper_left_y, lower_right_x, lower_right_y))
-
-            # sub_image.save("output/image/input_" + str(i) + "_" + str(j) + ".png", "PNG")
-            im.append(sub_image)
-        splitted_image.append(im)
-    
-    imageDraw(input_image.size, splitted_image, nodes, "input", grid_count_horizontal, grid_count_vertical)
-    output_image_size = input_image.size
-    '''
 
     print("Algorithm Started for " + str(grid_count_horizontal) + "_by_" + str(grid_count_vertical))
     #poly_draw(output_img_filename, 0, output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
@@ -436,17 +407,6 @@ if __name__ == "__main__":
         print('iteration: ' + str(x+1) + '(out of ' + str(iteration) + '): ')
 
         iteration_start_time = time()
-        '''
-        print(point_to_be_changed_array)
-        point_to_be_changed_array = [[[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5]],
-                                     [[1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5]],
-                                     [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [2, 5]],
-                                     [[3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [3, 5]],
-                                     [[4, 0], [4, 1], [4, 2], [4, 3], [4, 4], [4, 5]],
-                                     [[5, 0], [5, 1], [5, 2], [5, 3], [5, 4], [5, 5]],
-                                     [[6, 0], [6, 1], [6, 2], [6, 3], [6, 4], [6, 5]],
-                                     [[7, 0], [7, 1], [7, 2], [7, 3], [7, 4], [7, 5]]]
-        '''
 
         pool = mp.Pool(cpu_count)
         thread_result = []
@@ -510,11 +470,6 @@ if __name__ == "__main__":
 
         if current_rmse < 0.05:
             break
-        #rmse_diff = abs(prev_rmse - current_rmse)
-
-        #if current_rmse < 0.05 and rmse_diff < 0.01:
-
-        #prev_rmse = current_rmse
 
 
 
