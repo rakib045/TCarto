@@ -2,7 +2,19 @@
 TCarto is a simple, scalable, parallel code optimization for Table Cartograms.
 We present a table cartogram generator written in python. It uses local optimization based approach to construct table cartogram that gradually transforms the cells to improve the area discrepancies.
 
-This readme explains how to set-up and use this code as well as the input data format.
+This readme explains how to set-up and use this code as well as the Dataset Description and input data format.
+
+# Dataset Description
+We have build a rich database containing both Real-life and Synthetic Datasets of different grid sizes.
+
+## Real-life Dataset
+One Real-life Dataset is the `car' dataset, which is one of the commonly used dataset for infographic examples. The other one is Weather Research and Forecasting (WRF) model output for five weather parameters Soil Moisture (SMOIS), Surface Skin Temperature (TSK), Planetary Boundary Layer Height (PBLH), Soil Liquid Water (SH2O) and Surface Emissivity (EMISS). This geospatial dataset spans the western provinces of Canada. All these datasets are analyzed in 64x64 grids.
+
+## Synthetic Dataset
+We generated a synthetic dataset using the ELKI data mining frameworks, which is one of the widely used software for clustering and generating cluster datasets with user specified distribution. Our motivation for using synthetic data was to examine data characteristics that may influence the cartographic accuracy of a table cartogram. Hence we found ELKI to be an excellent choice for generating synthetic data. Our ELKI dataset contains two sets: (Set-I) varies the cluster number (2,4,8), and (SET-II) varies the standard deviation $\sigma$ (0.25,0.5,0.75). The other input parameters are chosen at random. For each group (e.g., 4 clusters in Set-I), we generate 10 instances. All the instances are two dimensional and the clusters have a Gaussian distribution in both dimensions. The ELKI datasets are in 8x8, 16x16, 32x32 and 64x64 resolution.
+
+We also used a benchmark `Shape' dataset to see whether table cartograms preserve various shapes. All the shape datasets are in resolution 8x8, 16x16, 32x32, 64x64, 128x128, 256x256 and 512x512.
+
 
 # Input Data Format:
 This code expect only one input data file. We suggest to unzip Datasets.zip and put it in the same directory. Please, copy the data file you are interested into 'input' folder and always generate output into 'output' folder. The only input data file is a (.txt) file that holds the weights/area values of the grids/cells of the cartogram. For example, an input data file (e.g. D31_cluster_31_grid_2_2.txt, located at '\Datasets\Synthetic Datasets\Shape Dataset' folder) is for a 2 by 2 grid cartogram. It holds data similar like below.
