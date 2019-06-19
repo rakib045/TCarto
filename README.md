@@ -1,5 +1,6 @@
 ![](ReadMe/TCarto_logo.png)<!-- -->
-# TCarto
+[![Github All Releases](https://img.shields.io/github/downloads/rakib045/TCarto/total.svg)]()
+
 TCarto is a simple, scalable, parallel code optimization for Table Cartograms.
 We present a table cartogram generator written in python. It uses local optimization based approach to construct table cartogram that gradually transforms the cells to improve the area discrepancies.
 
@@ -62,7 +63,7 @@ number_of_iteration -> Total number of iteration
   - **For windows:** 
     - Write all the commands into 'run_win.cmd' file
     - Double click to execute it
-  - **- For Linux/Ubuntu:**
+  - **For Linux/Ubuntu:**
     - Write all the commands into 'run_linux.sh' file
     - Make this file as executable by using 'chmod +x run_linux.sh' command
     - Run the file using '.\run_linux.sh'
