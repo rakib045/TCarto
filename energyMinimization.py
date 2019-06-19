@@ -669,6 +669,45 @@ def poly_draw(filename, it, im_size, nodes, grid_count_horizontal, grid_count_ve
                   + ' iterations' + str((it)) + '.png'
     img.save(imagestring)
 
+
+def poly_draw_color(filename, it, im_size, nodes, maxColorListByGrid, grid_count_horizontal, grid_count_vertical):
+    # Create an empty image
+
+    factor_x = int(im_size[0] / grid_count_horizontal)
+    factor_y = int(im_size[1] / grid_count_vertical)
+
+    img = Image.new('RGB', (grid_count_horizontal * factor_x, grid_count_vertical * factor_y), color=(73, 109, 137))
+    d = ImageDraw.Draw(img)
+    # Define a set of random color to color the faces
+    colour = ["red", "blue", "green", "yellow", "purple", "orange", "white", "black"]
+    # this is the factor to scale up the image
+
+    # Draw all the faces
+
+    for i in range(grid_count_horizontal):
+        for j in range(grid_count_vertical, 0, -1):
+            pol = Polygon(Point2D(nodes[i][j].loc.x, (grid_count_vertical - nodes[i][j].loc.y)),
+                          Point2D(nodes[i][j - 1].loc.x, (grid_count_vertical - nodes[i][j - 1].loc.y)),
+                          Point2D(nodes[i + 1][j - 1].loc.x, (grid_count_vertical - nodes[i + 1][j - 1].loc.y)),
+                          Point2D(nodes[i+1][j].loc.x, (grid_count_vertical - nodes[i+1][j].loc.y)))
+            area = abs(pol.area)
+
+            if area > imp_cell_threshold:
+                colour = ["green", "yellow"]
+            else:
+                colour = ["red", "blue"]
+
+            d.polygon([tuple(Point2D(nodes[i][j].loc.x * factor_x, (grid_count_vertical - nodes[i][j].loc.y) * factor_y))
+                          , tuple(Point2D(nodes[i][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i][j - 1].loc.y) * factor_y))
+                          , tuple(Point2D(nodes[i + 1][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i + 1][j - 1].loc.y) * factor_y))
+                          , tuple(Point2D(nodes[i+1][j].loc.x * factor_x, (grid_count_vertical - nodes[i+1][j].loc.y) * factor_y))]
+                      , fill=maxColorListByGrid[i][grid_count_vertical - j])
+            #d.text(Point2D(nodes[i][j].loc.x * factor_x,
+            #              (grid_count_vertical - nodes[i][j].loc.y) * factor_y), str(i)+ "_" +str(j))
+    imagestring = 'output//' + filename + '_table_weighted_cartogram-' + str(grid_count_horizontal) + '_' + str(grid_count_vertical) \
+                  + ' iterations' + str((it)) + '.png'
+    img.save(imagestring)
+
 ################# Polygon Draw ####################################
 
 ################ image drawing ####################################
