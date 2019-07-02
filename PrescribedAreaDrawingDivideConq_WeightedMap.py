@@ -42,7 +42,7 @@ class node:
 # the name of a node at point i,j is ij
 
 
-#python PrescribedAreaDrawingDivideConq_WeightedMap.py 256 "input/canada_gdp.csv" "Canada_state_GDP_weight" "input/Canada_state.png"
+#python PrescribedAreaDrawingDivideConq_WeightedMap.py 256 "input/canada_gdp.csv" "input/Canada_state.png" "Canada_state_GDP_weight"
 # First param = python file name
 # Second Param = square grid
 # Third Param = Input Data File
@@ -60,8 +60,15 @@ input_data_file = "input/canada_gdp.csv"
 input_image_file = "input/Canada_state.png"
 output_img_filename = "Canada_state_GDP_weight"
 '''
+'''
+square_grid = 8
+input_data_file = "input/sample.csv"
+input_image_file = "input/sample.png"
+output_img_filename = "sample_weight"
+'''
 color_column_name = "Color"
 weight_column_name = "GDP"
+label_column_name = "State"
 
 grid_count_horizontal_actual = square_grid
 grid_count_vertical_actual = square_grid
@@ -85,6 +92,7 @@ grid_count_vertical = 8
 
 colorOrderedList = []
 weightOrderedList = []
+nameOrderedList = []
 
 maxColorListByGrid = []
 
@@ -402,6 +410,7 @@ if __name__ == "__main__":
         for row in reader:
             colorOrderedList.append(row[color_column_name].upper())
             weightOrderedList.append(row[weight_column_name])
+            nameOrderedList.append(row[label_column_name])
 
     csvFile.close()
 
@@ -446,7 +455,32 @@ if __name__ == "__main__":
         weight_count = float(weightOrderedList[counter]) / count
         finalWeightByColorList.append(weight_count)
 
+
+
     # print(finalWeightByColorList)
+    neutral_color_weight = np.min(finalWeightByColorList) / 2
+
+    out_debug = "output/debug_0.txt"
+    out_debug_txt_file = open(out_debug, "w")
+
+
+    debug_str = ""
+    print("Total Grid: " + str(square_grid * square_grid))
+    debug_str += "Total Grid: " + str(square_grid * square_grid) + "\n"
+    count = 0
+    for item in colorOrderedList:
+        print("Label: " + str(nameOrderedList[count]) + ", Color: " + str(item) + ", Grid:" + str(total_count[item]) + ", Weight:" + str(finalWeightByColorList[count]))
+        debug_str += "Label: " + str(nameOrderedList[count]) + ", Color: " + str(item) + ", Grid:" + str(total_count[item]) \
+                     + ", Weight:" + str(finalWeightByColorList[count]) + "\n"
+        count = count + 1
+
+    print("Label: Neutral, Color: " + str(neutral_color) + ", Grid:" + str(total_count[neutral_color])
+          + ", Weight: " + str(neutral_color_weight))
+    debug_str += "Label: Neutral, Color: " + str(neutral_color) + ", Grid:" + str(total_count[neutral_color]) \
+                 + ", Weight: " + str(neutral_color_weight) + "\n"
+
+    out_debug_txt_file.write(debug_str)
+    out_debug_txt_file.close()
 
     for i in range(grid_count_horizontal_actual):
         arr = []
