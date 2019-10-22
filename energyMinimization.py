@@ -624,7 +624,7 @@ def all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, es
     output_txt_file.write(str(round(estimation_time,4)) + "\n")
     output_txt_file.close()
 
-    return round(total_rmse_error, 4)
+    return round(total_rmse_error, 4), error_list, updated_values, values
 
 
 ################# Error Calculation ###############################
@@ -701,7 +701,7 @@ def poly_draw_color(filename, it, im_size, nodes, maxColorListByGrid, grid_count
                           , tuple(Point2D(nodes[i][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i][j - 1].loc.y) * factor_y))
                           , tuple(Point2D(nodes[i + 1][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i + 1][j - 1].loc.y) * factor_y))
                           , tuple(Point2D(nodes[i+1][j].loc.x * factor_x, (grid_count_vertical - nodes[i+1][j].loc.y) * factor_y))]
-                      , fill=maxColorListByGrid[i][grid_count_vertical - j])
+                      , fill=maxColorListByGrid[i][grid_count_vertical - j]+"50")
             #d.text(Point2D(nodes[i][j].loc.x * factor_x,
             #              (grid_count_vertical - nodes[i][j].loc.y) * factor_y), str(i)+ "_" +str(j))
     imagestring = 'output//' + filename + '_table_weighted_cartogram-' + str(grid_count_horizontal) + '_' + str(grid_count_vertical) \

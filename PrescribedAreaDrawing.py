@@ -35,6 +35,7 @@ class node:
 
 
 #python PrescribedAreaDrawing.py 64 5 "input/PBLH_10_new_grid64_64.txt" "SingleThread_PBLH_10_new_grid64_64"
+#python PrescribedAreaDrawing.py 64 5 "input/TCarto_checker_data_8_8.txt" "SingleThread_TCarto_checker_data_8_8"
 # First param = python file name
 # Second Param = square grid
 # Third Param = Count of Iteration
@@ -330,7 +331,7 @@ for x in range(iteration):
     estimation_time = iteration_end_time - iteration_start_time
 
     total_algo_processing_time.append(estimation_time)
-    #poly_draw(output_img_filename, x+1, output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
+    poly_draw(output_img_filename, x+1, output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
 
     all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, output_img_filename,
                    x+1, -1, -1)

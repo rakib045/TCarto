@@ -8,11 +8,16 @@ from sympy.geometry import *
 from PIL import Image, ImageDraw
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import matplotlib
 from time import time
 import math as m
 from energyMinimization import *
 from time import sleep
 from threading import Thread
+from colormap import rgb2hex
+from collections import Counter
+import itertools
+import csv
 import sys
 
 ######################################
@@ -38,33 +43,62 @@ class node:
 # the name of a node at point i,j is ij
 
 
-#python PrescribedAreaDrawingDivideConq.py 64 "input/PBLH_10_new_grid64_64.txt" "DivCon_PBLH_10_new_grid64_64"
-#python PrescribedAreaDrawingDivideConq.py 8 "input/TCarto_checker_data_8_8.txt" "DivCon_checker_8_8"
+#python PrescribedAreaDrawingDivideConq_WeightedMap.py 256 "input/canada_gdp.csv" "input/Canada_state.png" "Canada_state_GDP_weight"
 # First param = python file name
 # Second Param = square grid
 # Third Param = Input Data File
 # Forth Param = Output File Name
 
+'''
 square_grid = int(sys.argv[1])
 input_data_file = sys.argv[2]
-output_img_filename = sys.argv[3]
+input_image_file = sys.argv[3]
+output_img_filename = sys.argv[4]
+'''
+
+square_grid = 128
+input_data_file = "input/sample.csv"
+input_image_file = "input/sample.png"
+output_img_filename = "sample_weight"
 
 '''
-square_grid = 64
-input_data_file = "input/Aggregation_cluster_3_grid_64_64.txt"
-output_img_filename = "DivideAndConq_Aggregation_cluster_3_grid_64_64"
+square_grid = 8
+input_data_file = "input/sample.csv"
+input_image_file = "input/sample.png"
+output_img_filename = "sample_weight"
 '''
+color_column_name = "Color"
+weight_column_name = "GDP"
+label_column_name = "State"
 
 grid_count_horizontal_actual = square_grid
 grid_count_vertical_actual = square_grid
-#cpu_count = mp.cpu_count()
-cpu_count = 2
+cpu_count = mp.cpu_count()
+#cpu_count = 2
 
-output_image_size = [1024, 1024]
+#output_image_size = [1024, 1024]
+output_image_size = [0, 0]
+
 is_max_heiristic = True
 boundary_node_movement = True
-input_img_file = "input/weather_tsk.png"
 iteration = 0
+
+neutral_color = "#FFFFFF"
+neutral_color_weight = 1000
+
+output_file_name = ""
+
+grid_count_horizontal = 8
+grid_count_vertical = 8
+
+colorOrderedList = []
+weightOrderedList = []
+nameOrderedList = []
+
+maxColorListByGrid = []
+
+finalWeightByColorList = []
+finalWeightByGrid = []
 
 
 total_algo_processing_time = []
@@ -361,10 +395,149 @@ if __name__ == "__main__":
 
     print("Max Heuristic : " + str(is_max_heiristic))
 
+    print("Reading Image file and calculating weights ...")
+
+    input_image = Image.open(input_image_file)
+    input_image = input_image.convert("RGB")
+
+    output_image_size = input_image.size
+
+    # print(input_image.format, input_image.size, input_image.mode)
+
+    ##########   Image weight calculation ###########
+
+    with open(input_data_file, 'r') as csvFile:
+        reader = csv.DictReader(csvFile)
+        for row in reader:
+            colorOrderedList.append(row[color_column_name].upper())
+            weightOrderedList.append(row[weight_column_name])
+            nameOrderedList.append(row[label_column_name])
+
+    csvFile.close()
+
+    splitted_image = []
+
+    for i in range(grid_count_horizontal_actual):
+        im = []
+        for j in range(grid_count_vertical_actual):
+            block_width = input_image.size[0] / grid_count_horizontal_actual
+            block_height = input_image.size[1] / grid_count_vertical_actual
+            upper_left_x = i * block_width
+            upper_left_y = j * block_height
+            lower_right_x = upper_left_x + block_width
+            lower_right_y = upper_left_y + block_height
+
+            sub_image = input_image.crop((upper_left_x, upper_left_y, lower_right_x, lower_right_y))
+
+            #sub_image.save("input/image/input_" + str(i) + "_" + str(j) + ".png", "PNG")
+            im.append(sub_image)
+        splitted_image.append(im)
+
+    for i in range(grid_count_horizontal_actual):
+        arr = []
+        for j in range(grid_count_vertical_actual):
+            occurence_count = Counter(splitted_image[i][j].getdata())
+            pix_col_rgb = occurence_count.most_common(2)
+            pix_col_hex = rgb2hex(pix_col_rgb[0][0][0], pix_col_rgb[0][0][1], pix_col_rgb[0][0][2])
+
+            if pix_col_hex == neutral_color:
+                if occurence_count.most_common(2).__len__() > 1:
+                    if pix_col_rgb[1][1] > 10:
+                        pix_col_hex = rgb2hex(pix_col_rgb[1][0][0], pix_col_rgb[1][0][1], pix_col_rgb[1][0][2])
+
+            arr.append(pix_col_hex)
+
+        maxColorListByGrid.append(arr)
+
+    total_count = Counter(i for i in list(itertools.chain.from_iterable(maxColorListByGrid)))
+
+    for counter in range(len(colorOrderedList)):
+        count = total_count[colorOrderedList[counter]]
+        weight_count = float(weightOrderedList[counter]) / count
+        finalWeightByColorList.append(weight_count)
+
+
+
+    # print(finalWeightByColorList)
+    neutral_color_weight = np.min(finalWeightByColorList) / 2
+
+    out_debug = "output/debug_0.txt"
+    out_debug_txt_file = open(out_debug, "w")
+
+
+    debug_str = ""
+    print("Total Grid: " + str(square_grid * square_grid))
+    debug_str += "Total Grid: " + str(square_grid * square_grid) + "\n"
+    count = 0
+    for item in colorOrderedList:
+        print("Label: " + str(nameOrderedList[count]) + ", Color: " + str(item) + ", Grid:" + str(total_count[item]) + ", Weight:" + str(finalWeightByColorList[count]))
+        debug_str += "Label: " + str(nameOrderedList[count]) + ", Color: " + str(item) + ", Grid:" + str(total_count[item]) \
+                     + ", Weight:" + str(finalWeightByColorList[count]) + "\n"
+        count = count + 1
+
+    print("Label: Neutral, Color: " + str(neutral_color) + ", Grid:" + str(total_count[neutral_color])
+          + ", Weight: " + str(neutral_color_weight))
+    debug_str += "Label: Neutral, Color: " + str(neutral_color) + ", Grid:" + str(total_count[neutral_color]) \
+                 + ", Weight: " + str(neutral_color_weight) + "\n"
+
+    out_debug_txt_file.write(debug_str)
+    out_debug_txt_file.close()
+
+    for i in range(grid_count_horizontal_actual):
+        arr = []
+        for j in range(grid_count_vertical_actual):
+            # print(maxColorListByGrid[i][j])
+            if maxColorListByGrid[i][j] == neutral_color:
+                arr.append(neutral_color_weight)
+            else:
+                color_hex = maxColorListByGrid[i][j]
+                try:
+                    ind = colorOrderedList.index(color_hex)
+                    arr.append(finalWeightByColorList[ind])
+                except:
+                    arr.append(neutral_color_weight)
+
+        finalWeightByGrid.append(arr)
+
+    #print(finalWeightByGrid)
+
+    val_string = ""
+    count = 1
+
+    for i in range(grid_count_horizontal_actual):
+        for j in range(grid_count_vertical_actual):
+            val_string += str(finalWeightByGrid[i][j])
+            if count != grid_count_horizontal_actual * grid_count_vertical_actual:
+                val_string += ", "
+                if (count % grid_count_horizontal == 0):
+                    val_string += "\n"
+            count += 1
+
+    values_actual = np.zeros((grid_count_horizontal_actual, grid_count_vertical_actual))
+
+    sample_val = []
+    val_str = val_string.replace('\n', '').replace(' ', '').split(",")
+
+    for v in val_str:
+        sample_val.append(float(v))
+
+    sample_val_count = 0
+    for j in range(grid_count_vertical_actual - 1, -1, -1):
+        for i in range(grid_count_horizontal_actual):
+            values_actual[i][j] = sample_val[sample_val_count]
+            sample_val_count += 1
+
+    # we now normalize the cell values so that
+    # all values sum to 1
+    values_actual = values_actual / values_actual.sum()
+
+    # all values sum to totalarea
+    values_actual = values_actual * grid_count_horizontal_actual * grid_count_vertical_actual
+
+    #values_actual = read_text_file("input/surface_skin_temp_16_16.txt", grid_count_horizontal_actual, grid_count_vertical_actual)
+
+    ##########   Image weight calculation end ###########
     print("Algorithm Started for " + str(grid_count_horizontal_actual) + "_by_" + str(grid_count_vertical_actual))
-
-
-    values_actual = read_text_file(input_data_file, grid_count_horizontal_actual, grid_count_vertical_actual)
 
     nodes = []
 
@@ -465,7 +638,7 @@ if __name__ == "__main__":
 
         iteration = int(m.log(grid_count_horizontal_actual,2) - m.log(grid_count_horizontal, 2)) + 1
         if stg == (m.log(grid_count_horizontal_actual,2) - 1):
-            iteration  = 10
+            iteration  = 3
 
         #iteration = int(m.log(grid_count_horizontal, 2))
         for x in range(iteration):
@@ -543,8 +716,9 @@ if __name__ == "__main__":
             total_algo_processing_time.append(estimation_time)
 
             #
-            all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, output_img_filename, x+1, stg, preprocessing_time)
-        poly_draw(output_img_filename, "_stage" + str(stg) + "_after", output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
+            rmse_error, error_list, updated_values, vals = all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, output_img_filename, x+1, stg, preprocessing_time)
+        #poly_draw_color(output_img_filename, "_stage" + str(stg) + "_after", output_image_size, nodes, maxColorListByGrid,
+        #                grid_count_horizontal, grid_count_vertical)
 
 
     print("------------------------------------------")
@@ -563,10 +737,50 @@ if __name__ == "__main__":
     print("Algorithm Finished !! ")
     print("Drawing Image ... ")
 
-    #poly_draw(output_img_filename, str(iteration) + "_stage" + str(int(m.log(grid_count_horizontal_actual, 2))), output_image_size,
-    #          nodes, grid_count_horizontal_actual, grid_count_vertical_actual)
+    poly_draw_color(output_img_filename, str(iteration) + "_stage" + str(int(m.log(grid_count_horizontal_actual, 2))), output_image_size,
+              nodes, maxColorListByGrid, grid_count_horizontal_actual, grid_count_vertical_actual)
+    poly_draw(output_img_filename, str(iteration) + "_stage" + str(int(m.log(grid_count_horizontal_actual, 2))),
+                    output_image_size, nodes, grid_count_horizontal_actual, grid_count_vertical_actual)
     #imageDraw(input_image.size, splitted_image, nodes, "output", grid_count_horizontal_actual, grid_count_vertical_actual)
 
     print("Finished")
+    #print(maxColorListByGrid)
+    min_error = np.min(error_list)
+    max_error = np.max(error_list)
+    print(error_list)
+    print("Min Error : " + str(min_error))
+    print("Max Error : " + str(max_error))
+    print("Ratio :\n")
+    error_perct = (error_list-min_error)/(max_error-min_error)*1
 
+    #print(vals)
+    #print(updated_values)
+    #print(error_perct)
+
+    error_perct_transpose = np.zeros_like(error_perct)
+
+    shape_y = error_perct.shape[1]
+    for i in range(error_perct.shape[0]):
+        for j in range(shape_y):
+            error_perct_transpose[i][shape_y - j - 1] = error_perct[i][j]
+
+    print(error_perct_transpose)
+
+    #cmap = matplotlib.cm.get_cmap('Spectral')
+    cmap = matplotlib.cm.get_cmap('Greys')
+    #color_array = cmap(error_perct)
+    color_array = cmap(error_perct_transpose)
+
+    error_color = np.zeros_like(maxColorListByGrid)
+
+    for i in range(error_color.shape[0]):
+        for j in range(error_color.shape[1]):
+            error_color[i][j] = matplotlib.colors.rgb2hex(color_array[i][j])
+
+
+    print(error_color)
+
+    poly_draw_color(output_img_filename + "_err_", str(iteration) + "_stage" + str(int(m.log(grid_count_horizontal_actual, 2))),
+                    output_image_size,
+                    nodes, error_color, grid_count_horizontal_actual, grid_count_vertical_actual)
 
