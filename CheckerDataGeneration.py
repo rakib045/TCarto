@@ -3,18 +3,18 @@ import numpy as np
 import heapq
 import pandas as pd
 matplotlib.use("agg")
-from sklearn.datasets.samples_generator import make_blobs
+#from sklearn.datasets.samples_generator import make_blobs
 from matplotlib import pyplot
 from pandas import DataFrame
 
 
 null_grid_weight = 0.8
-centers = [(1, 1), (0.1, 0.1), (0.5,0.45)]
+centers = [(1, 1), (0.1, 0.1), (0.5, 0.45)]
 filepath = "Datasets/GeneratedData/"
 # grid=[2,4,8,16,32,64,128,256,512,1024]
 grid = [8]
 zero_zero_val = 1.0
-zero_one_val = 0.05
+zero_one_val = 10.0
 
 
 data = []
@@ -28,6 +28,7 @@ for g in grid:
             else:
                 data.append(zero_one_val)
 
+    '''
     file_name_boundary = filepath + "MaxFlow_checker_" + str(g) + "_" + str(
         g) + ".gen"
     file_name_weight = filepath + "MaxFlow_checker_" + str(g) + "_" + str(
@@ -59,6 +60,7 @@ for g in grid:
     out_boundary_file.write("END\n")
     out_weight_file.close()
     out_boundary_file.close()
+    '''
 
     print("TCarto Data is generating for " + str(g) + " by " + str(g))
 

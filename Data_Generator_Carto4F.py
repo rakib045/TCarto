@@ -1,13 +1,15 @@
 import shapefile
 import numpy as np
 
-grid_count = 8
+grid_count = 64
 file_path = "Datasets/GeneratedData/"
-input_weighted_file_name = file_path + "TCarto_checker_data_8_8.txt"
-output_file_name = file_path + "Carto4F_checker_data_8_8"
+#file_path = "output_shape_carto4F/only_carto/"
+#file_path = "input/"
+input_weighted_file_name = file_path + "Aggregation_cluster_3_grid_64_64.txt"
+output_file_name = file_path + "Aggregation_cluster_3_grid_64_64"
 
 
-w = shapefile.Writer(shapefile.POLYGON)
+w = shapefile.Writer(output_file_name, shapefile.POLYGON)
 
 #this is how to add a polygon
 '''
@@ -17,7 +19,8 @@ w.poly([ [[1.,0.],[1.,1.],[2.,1.],[2.,0.]] ])
 
 for i in range(grid_count):
     for j in range(grid_count):
-        w.poly([ [[i, j], [i, j+1], [i+1, j+1], [i+1, j]] ])
+        w.poly([[[i, j], [i, j + 1], [i + 1, j + 1], [i + 1, j], [i, j]]])
+        #w.poly([ [[i, j],  [i+1, j], [i+1, j+1], [i, j+1], [i, j] ] ])
 
 '''
 w.field('ID','C','40')
@@ -41,12 +44,23 @@ for i in range(len(in_str)):
 val_str = in_total_str.split(",")
 input_file.close()
 
+for v in val_str:
+    sample_val.append(float(v))
+
+values = np.zeros((grid_count, grid_count))
+sample_val_count = 0
+for j in range(grid_count - 1, -1, -1):
+    for i in range(grid_count):
+        values[i][j] = sample_val[sample_val_count]
+        sample_val_count += 1
+
 index = 0
 for i in range(grid_count):
     for j in range(grid_count):
         id = str(i) + "_" + str(j)
-        pop = str(val_str[index])
+        #pop = str(val_str[index])
+        pop = str(values[i][j])
         w.record(id, pop)
         index += 1
 
-w.save(output_file_name)
+#w.save(output_file_name)

@@ -44,26 +44,25 @@ class node:
 # Second Param = square grid
 # Third Param = Input Data File
 # Forth Param = Output File Name
-
+'''
 square_grid = int(sys.argv[1])
 input_data_file = sys.argv[2]
 output_img_filename = sys.argv[3]
 
 '''
-square_grid = 64
-input_data_file = "input/Aggregation_cluster_3_grid_64_64.txt"
-output_img_filename = "DivideAndConq_Aggregation_cluster_3_grid_64_64"
-'''
+square_grid = 4
+input_data_file = "input/Aggregation_cluster_3_grid_4_4.txt"
+output_img_filename = "DivideAndConq_TCarto_Aggregation_cluster_3_grid_4_4"
+
 
 grid_count_horizontal_actual = square_grid
 grid_count_vertical_actual = square_grid
-#cpu_count = mp.cpu_count()
-cpu_count = 2
+cpu_count = mp.cpu_count()
+#cpu_count = 2
 
-output_image_size = [1024, 1024]
+output_image_size = [512, 512]
 is_max_heiristic = True
 boundary_node_movement = True
-input_img_file = "input/weather_tsk.png"
 iteration = 0
 
 
@@ -427,6 +426,8 @@ if __name__ == "__main__":
                 values[x][y] = np.sum(values_actual[(h_scale * x):(h_scale * (x+1)),
                                (v_scale*y):(v_scale * (y+1))])
 
+        #actual_values = np.array(values, copy=True)
+
         values = values / np.sum(values)
 
         # all values sum to totalarea
@@ -465,7 +466,7 @@ if __name__ == "__main__":
 
         iteration = int(m.log(grid_count_horizontal_actual,2) - m.log(grid_count_horizontal, 2)) + 1
         if stg == (m.log(grid_count_horizontal_actual,2) - 1):
-            iteration  = 10
+            iteration = 3
 
         #iteration = int(m.log(grid_count_horizontal, 2))
         for x in range(iteration):
@@ -544,7 +545,7 @@ if __name__ == "__main__":
 
             #
             all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, output_img_filename, x+1, stg, preprocessing_time)
-        poly_draw(output_img_filename, "_stage" + str(stg) + "_after", output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
+        #poly_draw(output_img_filename, "_stage" + str(stg) + "_after", output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
 
 
     print("------------------------------------------")
@@ -563,10 +564,18 @@ if __name__ == "__main__":
     print("Algorithm Finished !! ")
     print("Drawing Image ... ")
 
-    #poly_draw(output_img_filename, str(iteration) + "_stage" + str(int(m.log(grid_count_horizontal_actual, 2))), output_image_size,
-    #          nodes, grid_count_horizontal_actual, grid_count_vertical_actual)
+    poly_draw(output_img_filename, str(iteration) + "_stage" + str(int(m.log(grid_count_horizontal_actual, 2))), output_image_size,
+              nodes, grid_count_horizontal_actual, grid_count_vertical_actual)
     #imageDraw(input_image.size, splitted_image, nodes, "output", grid_count_horizontal_actual, grid_count_vertical_actual)
 
-    print("Finished")
+    print('Generating Carto4F file ...')
+    shapeGenCarto4F(square_grid, values_actual, nodes, "output_shape_carto4F/" + output_img_filename)
+    print('Finished Carto4F file ...')
+
+    print('Generating MaxFlow dat gen file ...')
+    datGenMaxFlowGeneration(square_grid, values_actual, nodes, "output_maxflow/" + output_img_filename)
+    print('Finished MaxFlow dat gen file ...')
+
+    print("Finished everything!")
 
 

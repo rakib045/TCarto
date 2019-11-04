@@ -41,12 +41,12 @@ class node:
 # Third Param = Count of Iteration
 # Forth Param = Input Data File
 # Fifth Param = Output File Name
-
+'''
 square_grid = int(sys.argv[1])
 iteration = int(sys.argv[2])
 input_data_file = sys.argv[3]
 output_img_filename = sys.argv[4]
-
+'''
 '''
 square_grid = 16
 #iteration = int(m.log(square_grid, 2))
@@ -54,6 +54,11 @@ iteration = 5
 input_data_file = "input/data_cat_16_16.txt"
 output_img_filename = "SingleThread_Gaussian_16_16"
 '''
+
+square_grid = 2
+iteration = 40
+input_data_file = "input/TCarto_checker_data_8_8.txt"
+output_img_filename = "DivideAndConq_TCarto_checker_data_8_8"
 
 grid_count_horizontal = square_grid
 grid_count_vertical = square_grid
@@ -313,6 +318,9 @@ for x in range(iteration):
                 val_BL = values[i - 1][j - 1]
                 val_TR = values[i][j]
                 val_BR = values[i][j - 1]
+
+                if x == 34 or x == 33:
+                    temp = 10
 
                 val = updateNode([p_top_left, p_left, p_bottom_left,
                                   p_top, p_middle, p_bottom,

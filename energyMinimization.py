@@ -10,6 +10,7 @@ import matplotlib.image as mpimg
 import sys
 import multiprocessing
 import math as m
+import shapefile
 
 from cvxopt import matrix, solvers
 
@@ -65,10 +66,10 @@ def read_text_file(input_data_file, grid_horiz, grid_vert):
 
     # we now normalize the cell values so that
     # all values sum to 1
-    values = values / values.sum()
+    #values = values / values.sum()
 
     # all values sum to totalarea
-    values = values * grid_vert * grid_horiz
+    #values = values * grid_vert * grid_horiz
 
     return values
 
@@ -513,6 +514,10 @@ def updateNode(nodes_array, values_array):
     output = cvxopt_solve_qp(P, q, G, h)
 
     point_min_distance = 0.05
+
+    if output is None:
+        return Point(-1, -1)
+
     if pointDist(p_left.loc[0], p_left.loc[1], output[0], output[1]) < point_min_distance:
         return Point(-1, -1)
 
@@ -593,6 +598,7 @@ def all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, es
 
     squared_error_list = (updated_diff / values) ** 2
     total_rmse_error = (np.sum(squared_error_list) / N) ** 0.5
+    weighter_rmse_error = (np.sum(values * squared_error_list) ) ** 0.5
 
     total_mqe_error = ((np.sum(squared_error_list)) ** 0.5) / N
 
@@ -602,6 +608,7 @@ def all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, es
     print("Error Rate : " + str(round(total_error, 4)))
     print("Updated Error Rate : " + str(round(total_fast_flow_error, 4)))
     print("RMSE Error Rate : " + str(round(total_rmse_error, 4)))
+    print("Weighted RMSE Error Rate : " + str(round(weighter_rmse_error, 4)))
     print("MQE Error Rate : " + str(round(total_mqe_error, 4)))
     print("Updated MQE Error Rate : " + str(round(updated_total_mqe_error, 6)))
     if preprocessing_time != -1:
@@ -790,3 +797,77 @@ def imageDraw(input_image, nodes, filename, grid_count_horizontal, grid_count_ve
     img.save('output/' + filename + '.png', 'PNG')
 
 ################ image drawing ####################################
+
+################ Shape File Generation ############################
+def shapeGenCarto4F(grid_count, values, nodes, output_file_name):
+    w = shapefile.Writer(output_file_name, shapefile.POLYGON)
+    for i in range(grid_count):
+        for j in range(grid_count):
+            w.poly(
+                [[
+                    [nodes[i][j].loc.x, nodes[i][j].loc.y],
+                    [nodes[i][j+1].loc.x, nodes[i][j+1].loc.y],
+                    [nodes[i+1][j+1].loc.x, nodes[i+1][j+1].loc.y],
+                    [nodes[i+1][j].loc.x, nodes[i+1][j].loc.y],
+                    [nodes[i][j].loc.x, nodes[i][j].loc.y]
+                ]]
+            )
+            #w.poly([[[i, j], [i, j + 1], [i + 1, j + 1], [i + 1, j]]])
+
+    w.field('ID', 'C', '40')
+    w.field('POP', 'F', '12')
+
+    for i in range(grid_count):
+        for j in range(grid_count):
+            id = str(i) + "_" + str(j)
+            pop = str(values[i][j])
+            #pop = 1
+            w.record(id, pop)
+
+    #w.save(output_file_name)
+################ Shape File Generation ############################
+
+################ Dat Gen - Max Flow generation ####################
+def datGenMaxFlowGeneration(grid, values, nodes, output_file_name):
+
+    file_name_boundary = output_file_name + ".gen"
+    file_name_weight = output_file_name + ".dat"
+
+    out_weight_file = open(file_name_weight, "w")
+    out_boundary_file = open(file_name_boundary, "w")
+
+    counter = 0
+
+    for i in range(len(values)):
+        for j in range(len(values[0])):
+            # print(str(result_array[i][j]) + ",")
+            id_name = "A_" + str(i) + "_" + str(j)
+            out_weight_file.write(str(counter) + " " + str(values[i][j]) + " " + id_name)
+            '''
+            out_boundary_file.write(str(counter) + " " + id_name + "\n")
+            out_boundary_file.write(str(i) + " " + str(j * (-1)) + "\n")
+            out_boundary_file.write(str(i + 1) + " " + str(j * (-1)) + "\n")
+            out_boundary_file.write(str(i + 1) + " " + str((j + 1) * (-1)) + "\n")
+            out_boundary_file.write(str(i) + " " + str((j + 1) * (-1)) + "\n")
+            out_boundary_file.write(str(i) + " " + str(j * (-1)) + "\n")
+            '''
+
+            out_boundary_file.write(str(counter) + " " + id_name + "\n")
+            out_boundary_file.write(str(round(nodes[i][j].loc.x, 10)) + " " + str(round(nodes[i][j].loc.y,10)) + "\n")
+            out_boundary_file.write(str(round(nodes[i+1][j].loc.x, 10)) + " " + str(round(nodes[i+1][j].loc.y, 10) ) + "\n")
+            out_boundary_file.write(str(round(nodes[i+1][j+1].loc.x,10)) + " " + str(round(nodes[i+1][j+1].loc.y,10) ) + "\n")
+            out_boundary_file.write(str(round(nodes[i][j+1].loc.x,10)) + " " + str(round(nodes[i][j+1].loc.y,10)) + "\n")
+            out_boundary_file.write(str(round(nodes[i][j].loc.x,10)) + " " + str(round(nodes[i][j].loc.y,10) ) + "\n")
+
+            out_boundary_file.write("END\n")
+
+            counter += 1
+            if counter != grid * grid:
+                out_weight_file.write(str(("\n")))
+
+    out_boundary_file.write("END\n")
+    out_weight_file.close()
+    out_boundary_file.close()
+
+
+################ Dat Gen - Max Flow generation ####################
