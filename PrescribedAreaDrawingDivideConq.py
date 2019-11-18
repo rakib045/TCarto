@@ -50,9 +50,9 @@ input_data_file = sys.argv[2]
 output_img_filename = sys.argv[3]
 
 '''
-square_grid = 4
-input_data_file = "input/Aggregation_cluster_3_grid_4_4.txt"
-output_img_filename = "DivideAndConq_TCarto_Aggregation_cluster_3_grid_4_4"
+square_grid = 32
+input_data_file = "input/flow_data32_32.txt"
+output_img_filename = "DivideAndConq_TCarto_flow_data32_32"
 
 
 grid_count_horizontal_actual = square_grid
@@ -365,7 +365,25 @@ if __name__ == "__main__":
 
     values_actual = read_text_file(input_data_file, grid_count_horizontal_actual, grid_count_vertical_actual)
 
-    nodes = []
+    #### percentile calculation ############
+    # To avoid percetile calc, comment this portion of code below
+    val_percentile_80 = np.percentile(values_actual, 80)
+    val_percentile_60 = np.percentile(values_actual, 60)
+    val_percentile_40 = np.percentile(values_actual, 40)
+    val_percentile_20 = np.percentile(values_actual, 20)
+    for x in range(values_actual.shape[0]):
+        for y in range(values_actual.shape[1]):
+            if values_actual[x][y] > val_percentile_80:
+                values_actual[x][y] = 5
+            elif (values_actual[x][y] <= val_percentile_80) and (values_actual[x][y] > val_percentile_60):
+                values_actual[x][y] = 4
+            elif (values_actual[x][y] <= val_percentile_60) and (values_actual[x][y] > val_percentile_40):
+                values_actual[x][y] = 3
+            elif (values_actual[x][y] <= val_percentile_40) and (values_actual[x][y] > val_percentile_20):
+                values_actual[x][y] = 2
+            else:
+                values_actual[x][y] = 1
+    #### percentile calculation ############
 
     out_file_name = "output/out_log_" + output_img_filename + ".txt"
     output_txt_file = open(out_file_name, "w")
@@ -545,7 +563,7 @@ if __name__ == "__main__":
 
             #
             all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, output_img_filename, x+1, stg, preprocessing_time)
-        #poly_draw(output_img_filename, "_stage" + str(stg) + "_after", output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
+        poly_draw(output_img_filename, "_stage" + str(stg) + "_after", output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
 
 
     print("------------------------------------------")
