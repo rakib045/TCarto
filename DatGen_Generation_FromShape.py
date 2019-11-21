@@ -3,12 +3,12 @@ import numpy as np
 matplotlib.use("agg")
 import shapefile
 
-file_path = "Datasets/GeneratedData/"
-file_name_shp = "Aggregation_cluster_3_grid_16_16_3.shp"
-file_name_dbf = "Aggregation_cluster_3_grid_16_16_3.dbf"
-file_name_shx = "Aggregation_cluster_3_grid_16_16_3.shx"
+file_path = "Datasets/GeneratedData/Carto4F/"
+file_name_shp = "EMISS_grid64_64_3.shp"
+file_name_dbf = "EMISS_grid64_64_3.dbf"
+file_name_shx = "EMISS_grid64_64_3.shx"
 
-output_file_name = "Aggregation_cluster_3_grid_16_16_3"
+output_file_name = "EMISS_grid64_64_3"
 
 
 myshp = open(file_path + file_name_shp, "rb")

@@ -7,10 +7,10 @@ matplotlib.use("agg")
 from matplotlib import pyplot
 from pandas import DataFrame
 
-grid = 4
+grid = 64
 file_path = "Datasets/GeneratedData/"
-file_name = "Aggregation_cluster_3_grid_4_4.txt"
-output_file_name = "Aggregation_cluster_3_grid_4_4"
+file_name = "PBLH_grid64_64.txt"
+output_file_name = "PBLH_grid64_64"
 input_weighted_file_name = file_path + file_name
 
 

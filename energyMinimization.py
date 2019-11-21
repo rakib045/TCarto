@@ -660,9 +660,10 @@ def poly_draw(filename, it, im_size, nodes, grid_count_horizontal, grid_count_ve
                           Point2D(nodes[i+1][j].loc.x, (grid_count_vertical - nodes[i+1][j].loc.y)))
             area = abs(pol.area)
 
+            '''
             if area > imp_cell_threshold:
                 colour = ["green", "yellow"]
-            else:
+            else:                
                 colour = ["#fee0d2", "#de2d26", "#e5f5e0", "#31a354"]
                 #colour = ["red", "blue"]
 
@@ -671,7 +672,13 @@ def poly_draw(filename, it, im_size, nodes, grid_count_horizontal, grid_count_ve
                           , tuple(Point2D(nodes[i + 1][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i + 1][j - 1].loc.y) * factor_y))
                           , tuple(Point2D(nodes[i+1][j].loc.x * factor_x, (grid_count_vertical - nodes[i+1][j].loc.y) * factor_y))]
                       , fill=colour[(0 if i % 2 == 0 else 2) + (j % 2)], outline="black")
-                      #, fill=colour[(i + j) % 2], outline="black")
+            '''
+            d.polygon(
+                [tuple(Point2D(nodes[i][j].loc.x * factor_x, (grid_count_vertical - nodes[i][j].loc.y) * factor_y))
+                    , tuple(Point2D(nodes[i][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i][j - 1].loc.y) * factor_y))
+                    , tuple(Point2D(nodes[i + 1][j - 1].loc.x * factor_x,(grid_count_vertical - nodes[i + 1][j - 1].loc.y) * factor_y))
+                    , tuple(Point2D(nodes[i + 1][j].loc.x * factor_x,(grid_count_vertical - nodes[i + 1][j].loc.y) * factor_y))]
+                , fill="black", outline="cyan")
             #d.text(Point2D(nodes[i][j].loc.x * factor_x,
             #              (grid_count_vertical - nodes[i][j].loc.y) * factor_y), str(i)+ "_" +str(j))
     imagestring = 'output//' + filename + '_table_cartogram-' + str(grid_count_horizontal) + '_' + str(grid_count_vertical) \

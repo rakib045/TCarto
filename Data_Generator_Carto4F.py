@@ -3,10 +3,8 @@ import numpy as np
 
 grid_count = 64
 file_path = "Datasets/GeneratedData/"
-#file_path = "output_shape_carto4F/only_carto/"
-#file_path = "input/"
-input_weighted_file_name = file_path + "Aggregation_cluster_3_grid_64_64.txt"
-output_file_name = file_path + "Aggregation_cluster_3_grid_64_64"
+input_weighted_file_name = file_path + "PBLH_grid64_64.txt"
+output_file_name = file_path + "PBLH_grid64_64"
 
 
 w = shapefile.Writer(output_file_name, shapefile.POLYGON)
@@ -31,8 +29,8 @@ w.field('POP','F','12')
 w.record('01','44') # first polygon cell value 44
 w.record('02','10') # 2nd polygon cell value 10
 '''
-w.field('ID','C','40')
-w.field('POP','F','12')
+w.field('ID','C', size=40)
+w.field('POP','F', decimal=10)
 
 sample_val = []
 input_file = open(input_weighted_file_name, "r")

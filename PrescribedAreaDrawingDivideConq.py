@@ -367,6 +367,7 @@ if __name__ == "__main__":
 
     #### percentile calculation ############
     # To avoid percetile calc, comment this portion of code below
+    '''
     val_percentile_80 = np.percentile(values_actual, 80)
     val_percentile_60 = np.percentile(values_actual, 60)
     val_percentile_40 = np.percentile(values_actual, 40)
@@ -374,15 +375,16 @@ if __name__ == "__main__":
     for x in range(values_actual.shape[0]):
         for y in range(values_actual.shape[1]):
             if values_actual[x][y] > val_percentile_80:
-                values_actual[x][y] = 5
+                values_actual[x][y] = 16
             elif (values_actual[x][y] <= val_percentile_80) and (values_actual[x][y] > val_percentile_60):
-                values_actual[x][y] = 4
+                values_actual[x][y] = 8
             elif (values_actual[x][y] <= val_percentile_60) and (values_actual[x][y] > val_percentile_40):
-                values_actual[x][y] = 3
+                values_actual[x][y] = 4
             elif (values_actual[x][y] <= val_percentile_40) and (values_actual[x][y] > val_percentile_20):
                 values_actual[x][y] = 2
             else:
                 values_actual[x][y] = 1
+    '''
     #### percentile calculation ############
 
     out_file_name = "output/out_log_" + output_img_filename + ".txt"
@@ -584,7 +586,6 @@ if __name__ == "__main__":
 
     poly_draw(output_img_filename, str(iteration) + "_stage" + str(int(m.log(grid_count_horizontal_actual, 2))), output_image_size,
               nodes, grid_count_horizontal_actual, grid_count_vertical_actual)
-    #imageDraw(input_image.size, splitted_image, nodes, "output", grid_count_horizontal_actual, grid_count_vertical_actual)
 
     print('Generating Carto4F file ...')
     shapeGenCarto4F(square_grid, values_actual, nodes, "output_shape_carto4F/" + output_img_filename)

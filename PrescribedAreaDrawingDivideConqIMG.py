@@ -38,7 +38,7 @@ class node:
 # the name of a node at point i,j is ij
 
 
-#python PrescribedAreaDrawingDivideConqIMG.py 32 "input/PBLH_10_new_grid32_32.txt" "DivConImg_PBLH_10_new_grid32_32"
+#python PrescribedAreaDrawingDivideConqIMG.py 64 "input/PBLH_10_new_grid64_64.txt" "DivConImg_PBLH_10_new_grid64_64" "input/weather_tsk.png"
 # First param = python file name
 # Second Param = square grid
 # Third Param = Input Data File
@@ -47,11 +47,13 @@ class node:
 square_grid = int(sys.argv[1])
 input_data_file = sys.argv[2]
 output_img_filename = sys.argv[3]
+input_img_file = sys.argv[4]
 '''
 
 square_grid = 64
-input_data_file = "input/PBLH_10_new_grid64_64.txt"
-output_img_filename = "DivCon_PBLH_10_64_64"
+input_data_file = "input/SH2O_grid64_64.txt"
+output_img_filename = "DivConImg_SH2O_grid64_64"
+input_img_file = "input/weather_tsk.png"
 
 
 grid_count_horizontal_actual = square_grid
@@ -62,7 +64,6 @@ cpu_count = mp.cpu_count()
 #output_image_size = [1024, 1024]
 is_max_heiristic = True
 boundary_node_movement = True
-input_img_file = "input/weather_tsk.png"
 iteration = 0
 
 
@@ -537,7 +538,7 @@ if __name__ == "__main__":
             #
             all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, output_img_filename, x+1, stg, preprocessing_time)
 
-        poly_draw(output_img_filename, "_stage" + str(stg) + "_after", output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
+        #poly_draw(output_img_filename, "_stage" + str(stg) + "_after", output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
 
 
 
@@ -559,7 +560,17 @@ if __name__ == "__main__":
 
     poly_draw(output_img_filename, str(iteration) + "_stage" + str(int(m.log(grid_count_horizontal_actual, 2))), output_image_size,
               nodes, grid_count_horizontal_actual, grid_count_vertical_actual)
-    imageDraw(input_image, nodes, "output_final_" + output_img_filename, grid_count_horizontal_actual, grid_count_vertical_actual)
+
+
+    print('Generating Carto4F file ...')
+    shapeGenCarto4F(square_grid, values_actual, nodes, "output_shape_carto4F/" + output_img_filename)
+    print('Finished Carto4F file ...')
+
+    print('Generating MaxFlow dat gen file ...')
+    datGenMaxFlowGeneration(square_grid, values_actual, nodes, "output_maxflow/" + output_img_filename)
+    print('Finished MaxFlow dat gen file ...')
+
+    #imageDraw(input_image, nodes, "output_final_" + output_img_filename, grid_count_horizontal_actual, grid_count_vertical_actual)
 
     print("Finished")
 
