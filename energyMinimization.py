@@ -1004,8 +1004,10 @@ def newImageDraw(input_image, nodes, filename, grid_count_horizontal, grid_count
     # ax.plot(tform.inverse(src)[:, 0], tform.inverse(src)[:, 1], '.b')
     # ax.axis((0, out_cols, out_rows, 0))
 
-    plt.imsave('output/' + filename + '.png', out)
-    return out
+    output_path = 'output/' + filename + '.png'
+
+    plt.imsave(output_path, out)
+    return output_path
 
 def newImageDrawTopToBottom(input_image, nodes, filename, grid_count_horizontal, grid_count_vertical):
     output_image_size = input_image.size
@@ -1041,9 +1043,10 @@ def newImageDrawTopToBottom(input_image, nodes, filename, grid_count_horizontal,
     # ax.imshow(out)
     # ax.plot(tform.inverse(src)[:, 0], tform.inverse(src)[:, 1], '.b')
     # ax.axis((0, out_cols, out_rows, 0))
+    output_path = 'output/' + filename + '.png'
 
-    plt.imsave('output/' + filename + '.png', out)
-    return out
+    plt.imsave(output_path, out)
+    return output_path
 ################ image drawing ####################################
 
 ################ Shape File Generation ############################
@@ -1116,6 +1119,5 @@ def datGenMaxFlowGeneration(grid, values, nodes, output_file_name):
     out_boundary_file.write("END\n")
     out_weight_file.close()
     out_boundary_file.close()
-
 
 ################ Dat Gen - Max Flow generation ####################

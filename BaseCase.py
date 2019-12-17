@@ -402,16 +402,20 @@ def run_GeneralCase(input_img_file, input_data_file, square_grid, output_img_fil
 
     poly_draw_top_to_bottom("output_generalCase_", output_image_size, targeted_nodes,
                             grid_count_horizontal_actual, grid_count_vertical_actual)
-    output_image = newImageDrawTopToBottom(input_image, targeted_nodes, output_img_filename + '_image',
+    output_image_path = newImageDrawTopToBottom(input_image, targeted_nodes, output_img_filename + '_image',
                                            grid_count_horizontal_actual,
                                            grid_count_vertical_actual)
 
     all_error_print(values, targeted_nodes, grid_count_horizontal_actual, grid_count_vertical_actual,
                     processing_time, output_img_filename)
 
-    mse_error = compare_mse(np.asarray(input_image), output_image)
-    psnr_error = compare_psnr(np.asarray(input_image), output_image)
-    ssim_error = compare_ssim(np.asarray(input_image, dtype=float), output_image, multichannel=True)
+    output_image = Image.open(output_image_path)
+    out_image = np.asarray(output_image.convert("RGBA"))
+    in_image = np.asarray(input_image)
+
+    mse_error = compare_mse(in_image, out_image)
+    psnr_error = compare_psnr(in_image, out_image)
+    ssim_error = compare_ssim(in_image, out_image, multichannel=True)
 
     output_txt_file = open(out_file_name, "a")
     output_txt_file.write("\n\nTotal Processing Time(sec): " + str(round(processing_time, 4)) + "\n")

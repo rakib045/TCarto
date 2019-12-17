@@ -503,12 +503,16 @@ if __name__ == "__main__":
 
     poly_draw(output_img_filename, iteration, output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
     #imageDraw(input_image.size, splitted_image, nodes, "output", grid_count_horizontal, grid_count_vertical)
-    output_image = newImageDraw(input_image, nodes, output_img_filename,
+    output_image_path = newImageDraw(input_image, nodes, output_img_filename,
                                 grid_count_horizontal, grid_count_vertical)
 
-    mse_error = compare_mse(np.asarray(input_image), output_image)
-    psnr_error = compare_psnr(np.asarray(input_image), output_image)
-    ssim_error = compare_ssim(np.asarray(input_image, dtype=float), output_image, multichannel=True)
+    output_image = Image.open(output_image_path)
+    out_image = np.asarray(output_image.convert("RGBA"))
+    in_image = np.asarray(input_image)
+
+    mse_error = compare_mse(in_image, out_image)
+    psnr_error = compare_psnr(in_image, out_image)
+    ssim_error = compare_ssim(in_image, out_image, multichannel=True)
 
     output_txt_file = open(out_file_name, "a")
     output_txt_file.write("\n\nMSE : " + str(round(mse_error, 4)) + "\n")
