@@ -17,6 +17,8 @@ from cvxopt import matrix, solvers
 from energyMinimization import *
 from sympy import symbols
 from sympy.plotting import plot
+from skimage.transform import PiecewiseAffineTransform, warp
+
 ######################################
 # These are the helper functions
 ######################################
@@ -42,6 +44,29 @@ def grid_node_generation(node, grid_horiz, grid_vert):
 ###################  Grid Generation ###########################
 
 ################### Read From Input File #######################
+def read_text_file_actual_order(input_data_file, grid_horiz, grid_vert):
+    sample_val = []
+    input_file = open(input_data_file, "r")
+    in_total_str = ''
+    in_str = input_file.readlines()
+    for i in range(len(in_str)):
+        in_total_str += in_str[i].replace('\n', '').replace(' ', '')
+
+    val_str = in_total_str.split(",")
+    input_file.close()
+
+    for v in val_str:
+        sample_val.append(float(v))
+
+    values = np.zeros((grid_horiz, grid_vert))
+    sample_val_count = 0
+    for i in range(grid_horiz):
+        for j in range(grid_vert):
+            values[i][j] = sample_val[sample_val_count]
+            sample_val_count += 1
+
+    return values
+
 def read_text_file(input_data_file, grid_horiz, grid_vert):
     sample_val = []
     input_file = open(input_data_file, "r")
@@ -563,8 +588,11 @@ def point_in_poly(x, y, poly):
 
 ################# Error Calculation ###############################
 
-def all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, out_log_file_name, iteration, stage=-1, preprocessing_time=-1):
+def all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, out_log_file_name,
+                   iteration, stage=-1, preprocessing_time=-1):
     updated_values = np.zeros((grid_count_horizontal, grid_count_vertical))
+    aspect_ratio_m1 = np.zeros((grid_count_horizontal, grid_count_vertical))
+    aspect_ratio_m2 = np.zeros((grid_count_horizontal, grid_count_vertical))
 
     for ii in range(grid_count_horizontal):
         for jj in range(grid_count_vertical):
@@ -578,6 +606,12 @@ def all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, es
                 pol = Polygon(p_bottom.loc, p_middle.loc, p_left.loc, p_bottom_left.loc)
                 area = abs(pol.area)
                 updated_values[ii][jj] = round(area, 2)
+
+                bounding_box = pol.bounds;
+                height = abs(bounding_box[3] - bounding_box[1])
+                width = abs(bounding_box[2] - bounding_box[0])
+                aspect_ratio_m1[ii][jj] = height / width
+                aspect_ratio_m2[ii][jj] = min(height, width) / max(height, width)
 
             except ValueError:
                 # print("No solution...")
@@ -605,14 +639,20 @@ def all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, es
     updated_squared_error_list = (updated_diff / (updated_values + values)) ** 2
     updated_total_mqe_error = ((np.sum(updated_squared_error_list)) ** 0.5) / N
 
+    average_aspect_ratio_m1 = np.average(aspect_ratio_m1)
+    average_aspect_ratio_m2 = np.average(aspect_ratio_m2)
+
     print("Error Rate : " + str(round(total_error, 4)))
     print("Updated Error Rate : " + str(round(total_fast_flow_error, 4)))
     print("RMSE Error Rate : " + str(round(total_rmse_error, 4)))
     print("Weighted RMSE Error Rate : " + str(round(weighter_rmse_error, 4)))
     print("MQE Error Rate : " + str(round(total_mqe_error, 4)))
     print("Updated MQE Error Rate : " + str(round(updated_total_mqe_error, 6)))
+    print("Average Aspect Ratio (height/width) : " + str(round(average_aspect_ratio_m1, 6)))
+    print("Average Aspect Ratio min(height/width)/max(height/width) : " + str(round(average_aspect_ratio_m2, 6)))
     if preprocessing_time != -1:
         print("Pre Processing Time: " + str(round(preprocessing_time, 4)) + " sec")
+
     print("Processing Time: " + str(round(estimation_time, 4)) + " sec")
     print("------------------------------------------")
 
@@ -626,13 +666,101 @@ def all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, es
     output_txt_file.write(str(round(total_rmse_error, 4)) + ", ")
     output_txt_file.write(str(round(total_mqe_error, 4)) + ", ")
     output_txt_file.write(str(round(updated_total_mqe_error, 6)) + ", ")
+    output_txt_file.write(str(round(average_aspect_ratio_m1, 6)) + ", ")
+    output_txt_file.write(str(round(average_aspect_ratio_m2, 6)) + ", ")
     if preprocessing_time != -1:
         output_txt_file.write(str(round(preprocessing_time, 4)) + ", ")
+
     output_txt_file.write(str(round(estimation_time,4)) + "\n")
     output_txt_file.close()
 
     return round(total_rmse_error, 4), error_list, updated_values, values
 
+def all_error_print(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, out_log_file_name,
+                    iteration=-1, stage=-1):
+
+    updated_values = np.zeros((grid_count_horizontal, grid_count_vertical))
+    aspect_ratio_m1 = np.zeros((grid_count_horizontal, grid_count_vertical))
+    aspect_ratio_m2 = np.zeros((grid_count_horizontal, grid_count_vertical))
+
+    for i in range(grid_count_horizontal):
+        for j in range(grid_count_vertical):
+
+            try:
+                p = nodes[i][j]
+                p_right = nodes[i+1][j]
+                p_right_bottom = nodes[i + 1][j + 1]
+                p_bottom = nodes[i][j+1]
+
+                pol = Polygon(p.loc, p_right.loc, p_right_bottom.loc, p_bottom.loc)
+                area = abs(pol.area)
+                updated_values[j][i] = area
+
+                bounding_box = pol.bounds;
+                height = abs(bounding_box[3] - bounding_box[1])
+                width = abs(bounding_box[2] - bounding_box[0])
+                aspect_ratio_m1[j][i] = height/width
+                aspect_ratio_m2[j][i] = min(height, width) / max(height, width)
+
+            except ValueError:
+                # print("No solution...")
+                area = 0
+
+            except AttributeError:
+                area = 0
+
+    N = grid_count_horizontal * grid_count_vertical
+
+    updated_diff = (abs(updated_values - values))
+    error_list = updated_diff / values
+
+    total_error = (np.sum(error_list) / N)
+
+    fast_flow_error = (updated_values / values) - 1
+    total_fast_flow_error = (np.sum(fast_flow_error) / N)
+
+    squared_error_list = (updated_diff / values) ** 2
+    total_rmse_error = (np.sum(squared_error_list) / N) ** 0.5
+    weighter_rmse_error = (np.sum(values * squared_error_list)) ** 0.5
+
+    total_mqe_error = ((np.sum(squared_error_list)) ** 0.5) / N
+
+    updated_squared_error_list = (updated_diff / (updated_values + values)) ** 2
+    updated_total_mqe_error = ((np.sum(updated_squared_error_list)) ** 0.5) / N
+
+    average_aspect_ratio_m1 = np.average(aspect_ratio_m1)
+    average_aspect_ratio_m2 = np.average(aspect_ratio_m2)
+
+
+
+    print("Error Rate : " + str(round(total_error, 4)))
+    print("Updated Error Rate : " + str(round(total_fast_flow_error, 4)))
+    print("RMSE Error Rate : " + str(round(total_rmse_error, 4)))
+    print("Weighted RMSE Error Rate : " + str(round(weighter_rmse_error, 4)))
+    print("MQE Error Rate : " + str(round(total_mqe_error, 4)))
+    print("Updated MQE Error Rate : " + str(round(updated_total_mqe_error, 6)))
+    print("Average Aspect Ratio (height/width) : " + str(round(average_aspect_ratio_m1, 6)))
+    print("Average Aspect Ratio min(height/width)/max(height/width) : " + str(round(average_aspect_ratio_m2, 6)))
+    print("Processing Time: " + str(round(estimation_time, 4)) + " sec")
+    print("------------------------------------------")
+
+    out_file_name = "output/" + out_log_file_name + "_log.txt"
+    output_txt_file = open(out_file_name, "a")
+    if stage != -1:
+        output_txt_file.write(str(stage) + ", ")
+    if iteration != -1:
+        output_txt_file.write(str(iteration) + ", ")
+    output_txt_file.write(str(round(total_error, 4)) + ", ")
+    output_txt_file.write(str(round(total_fast_flow_error, 4)) + ", ")
+    output_txt_file.write(str(round(total_rmse_error, 4)) + ", ")
+    output_txt_file.write(str(round(total_mqe_error, 4)) + ", ")
+    output_txt_file.write(str(round(updated_total_mqe_error, 6)) + ", ")
+    output_txt_file.write(str(round(average_aspect_ratio_m1, 6)) + ", ")
+    output_txt_file.write(str(round(average_aspect_ratio_m2, 6)) + ", ")
+    output_txt_file.write(str(round(estimation_time, 4)) + "\n")
+    output_txt_file.close()
+
+    return round(total_rmse_error, 4), error_list, updated_values, values
 
 ################# Error Calculation ###############################
 
@@ -685,7 +813,6 @@ def poly_draw(filename, it, im_size, nodes, grid_count_horizontal, grid_count_ve
                   + ' iterations' + str((it)) + '.png'
     img.save(imagestring)
 
-
 def poly_draw_color(filename, it, im_size, nodes, maxColorListByGrid, grid_count_horizontal, grid_count_vertical):
     # Create an empty image
 
@@ -724,6 +851,31 @@ def poly_draw_color(filename, it, im_size, nodes, maxColorListByGrid, grid_count
                   + ' iterations' + str((it)) + '.png'
     img.save(imagestring)
 
+def poly_draw_top_to_bottom(filename, im_size, nodes, grid_count_horizontal, grid_count_vertical):
+    # Create an empty image
+
+    factor_x = int(im_size[0] / grid_count_horizontal)
+    factor_y = int(im_size[1] / grid_count_vertical)
+
+    img = Image.new('RGB', (grid_count_horizontal * factor_x, grid_count_vertical * factor_y), color=(73, 109, 137))
+    d = ImageDraw.Draw(img)
+
+    # Draw all the faces
+
+    for i in range(grid_count_horizontal):
+        for j in range(grid_count_vertical):
+            d.polygon(
+                [tuple(Point2D(nodes[i][j].loc.x * factor_x, nodes[i][j].loc.y * factor_y))
+                    , tuple(Point2D(nodes[i][j + 1].loc.x * factor_x, nodes[i][j + 1].loc.y * factor_y))
+                    , tuple(Point2D(nodes[i + 1][j + 1].loc.x * factor_x, nodes[i + 1][j + 1].loc.y * factor_y))
+                    , tuple(Point2D(nodes[i + 1][j].loc.x * factor_x, nodes[i + 1][j].loc.y * factor_y))]
+                , fill="black", outline="cyan")
+
+    actualFileName = filename + '_' + str(grid_count_horizontal) + '_' + str(
+        grid_count_vertical) + '.png'
+    imagestring = 'output//' + actualFileName
+    img.save(imagestring)
+    return actualFileName
 ################# Polygon Draw ####################################
 
 ################ image drawing ####################################
@@ -805,6 +957,93 @@ def imageDraw(input_image, nodes, filename, grid_count_horizontal, grid_count_ve
 
     img.save('output/' + filename + '.png', 'PNG')
 
+def newImageDraw(input_image, nodes, filename, grid_count_horizontal, grid_count_vertical):
+    output_image_size = input_image.size
+    factor_x = int(output_image_size[0] / grid_count_horizontal)
+    factor_y = int(output_image_size[1] / grid_count_vertical)
+    '''
+    dst = []
+    for i in range(grid_count_horizontal + 1):
+        for j in range(grid_count_vertical + 1):
+            p = nodes[i][j].loc
+            # print(p[0]*factor_x)
+            # print(p[1]*factor_y)
+            dst.append([m.ceil(p[0] * factor_x), m.ceil(p[1] * factor_y)])
+    # print(dst)
+    # print(np.array())
+    dst = np.array(dst)
+    '''
+
+    dst = []
+    for i in range(grid_count_horizontal+1):
+        for j in range(grid_count_vertical, -1, -1):
+            dst.append([m.ceil(nodes[i][j].loc.x * factor_x), m.ceil((grid_count_vertical - nodes[i][j].loc.y) * factor_y)])
+
+    dst = np.array(dst)
+
+    #dst = np.array([[0, 0], [0, 400], [400, 0], [400, 400]])
+
+    src = []
+
+    # print(output_image_size)
+    for i in range(grid_count_horizontal + 1):
+        for j in range(grid_count_vertical + 1):
+            block_width = input_image.size[0] / grid_count_horizontal
+            block_height = input_image.size[1] / grid_count_vertical
+            upper_left_x = i * block_width
+            upper_left_y = j * block_height
+            src.append([m.ceil(upper_left_x), m.ceil(upper_left_y)])
+    src = np.array(src)
+    #src = np.array([[0, 0], [0, 400], [400, 0], [200, 400]])
+    tform = PiecewiseAffineTransform()
+    tform.estimate(dst, src)
+    out = warp(input_image, tform, output_shape=(output_image_size[0], output_image_size[1]))
+
+    # fig, ax = plt.subplots()
+    # ax.imshow(out)
+    # ax.plot(tform.inverse(src)[:, 0], tform.inverse(src)[:, 1], '.b')
+    # ax.axis((0, out_cols, out_rows, 0))
+
+    plt.imsave('output/' + filename + '.png', out)
+    return out
+
+def newImageDrawTopToBottom(input_image, nodes, filename, grid_count_horizontal, grid_count_vertical):
+    output_image_size = input_image.size
+    factor_x = int(output_image_size[0] / grid_count_horizontal)
+    factor_y = int(output_image_size[1] / grid_count_vertical)
+
+    dst = []
+    for i in range(grid_count_horizontal+1):
+        for j in range(grid_count_vertical+1):
+            dst.append([m.ceil(nodes[i][j].loc.x * factor_x), m.ceil(nodes[i][j].loc.y * factor_y)])
+
+    dst = np.array(dst)
+
+    #dst = np.array([[0, 0], [0, 400], [400, 0], [400, 400]])
+
+    src = []
+
+    # print(output_image_size)
+    for i in range(grid_count_horizontal + 1):
+        for j in range(grid_count_vertical + 1):
+            block_width = input_image.size[0] / grid_count_horizontal
+            block_height = input_image.size[1] / grid_count_vertical
+            upper_left_x = i * block_width
+            upper_left_y = j * block_height
+            src.append([m.ceil(upper_left_x), m.ceil(upper_left_y)])
+    src = np.array(src)
+    #src = np.array([[0, 0], [0, 400], [400, 0], [200, 400]])
+    tform = PiecewiseAffineTransform()
+    tform.estimate(dst, src)
+    out = warp(input_image, tform, output_shape=(output_image_size[0], output_image_size[1]))
+
+    # fig, ax = plt.subplots()
+    # ax.imshow(out)
+    # ax.plot(tform.inverse(src)[:, 0], tform.inverse(src)[:, 1], '.b')
+    # ax.axis((0, out_cols, out_rows, 0))
+
+    plt.imsave('output/' + filename + '.png', out)
+    return out
 ################ image drawing ####################################
 
 ################ Shape File Generation ############################

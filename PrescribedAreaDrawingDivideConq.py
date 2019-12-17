@@ -52,7 +52,7 @@ output_img_filename = sys.argv[3]
 '''
 square_grid = 32
 input_data_file = "input/flow_data32_32.txt"
-output_img_filename = "DivideAndConq_TCarto_flow_data32_32"
+output_img_filename = "DivideAndConq_flow_data32_32"
 
 
 grid_count_horizontal_actual = square_grid
@@ -63,7 +63,7 @@ cpu_count = mp.cpu_count()
 output_image_size = [512, 512]
 is_max_heiristic = True
 boundary_node_movement = True
-iteration = 0
+last_stage_itertion = 5
 
 
 total_algo_processing_time = []
@@ -486,7 +486,7 @@ if __name__ == "__main__":
 
         iteration = int(m.log(grid_count_horizontal_actual,2) - m.log(grid_count_horizontal, 2)) + 1
         if stg == (m.log(grid_count_horizontal_actual,2) - 1):
-            iteration = 3
+            iteration = last_stage_itertion
 
         #iteration = int(m.log(grid_count_horizontal, 2))
         for x in range(iteration):

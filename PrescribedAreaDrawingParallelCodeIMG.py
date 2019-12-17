@@ -13,7 +13,6 @@ import math as m
 from energyMinimization import *
 from time import sleep
 from threading import Thread
-import sys
 from skimage.measure import *
 
 ######################################
@@ -38,39 +37,41 @@ class node:
 # the following loop creates a bunch of nodes, each at point i,j
 # the name of a node at point i,j is ij
 
-
-#python PrescribedAreaDrawingDivideConqIMG.py 64 "input/PBLH_10_new_grid64_64.txt" "DivConImg_PBLH_10_new_grid64_64" "input/weather_tsk.png"
+#python PrescribedAreaDrawingParallelCode.py 64 5 "input/PBLH_10_new_grid64_64.txt" "ParallelThread_PBLH_10_new_grid64_64"
+#python PrescribedAreaDrawingParallelCode.py 64 5 "input/TCarto_checker_data_8_8.txt" "ParallelThread_8_8"
+#python PrescribedAreaDrawing.py 64 5 "input/TCarto_checker_data_8_8.txt" "SingleThread_TCarto_checker_data_8_8"
 # First param = python file name
 # Second Param = square grid
-# Third Param = Input Data File
-# Forth Param = Output File Name
+# Third Param = Count of Iteration
+# Forth Param = Input Data File
+# Fifth Param = Output File Name
 '''
 square_grid = int(sys.argv[1])
-input_data_file = sys.argv[2]
-output_img_filename = sys.argv[3]
-input_img_file = sys.argv[4]
+iteration = int(sys.argv[2])
+input_data_file = sys.argv[3]
+output_img_filename = sys.argv[4]
+
 '''
 
 square_grid = 8
+#iteration = int(m.log(square_grid, 2))
+iteration = 10
 input_data_file = 'input/weight_8_8.txt'
-output_img_filename = 'output_DivCon'
+output_img_filename = 'output_ParallelCode'
 input_img_file = "input/weather_tsk.png"
 
 
-grid_count_horizontal_actual = square_grid
-grid_count_vertical_actual = square_grid
+grid_count_horizontal = square_grid
+grid_count_vertical = square_grid
 cpu_count = mp.cpu_count()
 #cpu_count = 2
 
 #output_image_size = [1024, 1024]
 is_max_heiristic = True
 boundary_node_movement = True
-iteration = 0
 
 
 total_algo_processing_time = []
-total_preprocessing_time = []
-
 min_boundary_p_dist = 0.1
 
 
@@ -349,6 +350,7 @@ def pointDPT_based_on_horizontal_points(h_grid_assigned, cpu_unassigned, values,
         cpu_unassigned -= 1
 
     return final_array_first, final_array_second
+
 #################################
 # Algorithm: Prescribed_Area_Drawing
 #################################
@@ -357,25 +359,42 @@ def pointDPT_based_on_horizontal_points(h_grid_assigned, cpu_unassigned, values,
 
 if __name__ == "__main__":
 
+    #prev_rmse = 0
+
     print("Number of available Processors: " + str(mp.cpu_count()))
     print("Number of used Processors: " + str(cpu_count))
 
     print("Max Heuristic : " + str(is_max_heiristic))
 
-    print("Algorithm Started for " + str(grid_count_horizontal_actual) + "_by_" + str(grid_count_vertical_actual))
+    ######## Node Generation ########
+
+    nodes = grid_node_generation(node, grid_count_horizontal, grid_count_vertical)
+    ######## Node Generation ########
+
+    ##### Reading from Input File ###########
+    values_actual = read_text_file(input_data_file, grid_count_horizontal, grid_count_vertical)
+
+    values = values_actual / np.sum(values_actual)
+
+    # all values sum to totalarea
+    values = values * grid_count_horizontal * grid_count_vertical
+
+    # nodes that should not move
+    nodes[0][0].movable = False
+    nodes[0][grid_count_vertical].movable = False
+    nodes[grid_count_horizontal][0].movable = False
+    nodes[grid_count_horizontal][grid_count_vertical].movable = False
+    # print(nodes)
 
 
-    values_actual = read_text_file(input_data_file, grid_count_horizontal_actual, grid_count_vertical_actual)
-
-    nodes = []
+    print("Algorithm Started for " + str(grid_count_horizontal) + "_by_" + str(grid_count_vertical))
+    #poly_draw(output_img_filename, 0, output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
 
     out_file_name = "output/out_log_" + output_img_filename + ".txt"
     output_txt_file = open(out_file_name, "w")
-    output_txt_file.write(
-        "Preprocess the data once at each stage\n")
-    output_txt_file.write("Stage, Iteration, |UV-EV|/EV, UV/EV - 1, RMSE, MQE = (((|UV-EV|/EV) ** 2) ** 0.5)/N,"
+    output_txt_file.write("Iteration, |UV-EV|/EV, UV/EV - 1, RMSE, MQE = (((|UV-EV|/EV) ** 2) ** 0.5)/N,"
                           " Updated MQE = (((|UV-EV|/(UV+EV)) ** 2) ** 0.5)/N, Average Aspect Ratio (height/width),"
-                          "Average Aspect Ratio min(height/width)/max(height/width), Pre processing Time(sec), "
+                          "Average Aspect Ratio min(height/width)/max(height/width), "
                           "Iteration Time(sec)\n")
     output_txt_file.close()
 
@@ -383,179 +402,98 @@ if __name__ == "__main__":
     input_image = input_image.convert("RGBA")
     output_image_size = input_image.size
 
-    stage_count = int(m.log(grid_count_horizontal_actual, 2))
-    ######## Node Generation ########
-    for stg in range(stage_count):
+    preprocessing_start_time = time()
 
-        preprocessing_start_time = time()
+    if ((2*cpu_count) - 1) > (grid_count_horizontal + 1):
+        cpu_count = int(m.ceil((grid_count_horizontal + 1)/2))
 
-        grid_count_horizontal = 2 ** (stg + 1)
-        grid_count_vertical = 2 ** (stg + 1)
+    point_to_be_changed_array, point_to_between_thread = pointDPT_based_on_horizontal_points(grid_count_horizontal + 1,
+                                                                                             cpu_count, values,
+                                                                                             is_max_heiristic,
+                                                                                             grid_count_horizontal,
+                                                                                             grid_count_vertical)
+    preprocessing_end_time = time()
+    preprocessing_time = preprocessing_end_time - preprocessing_start_time
 
-        if stg == 0:
-            nodes = grid_node_generation(node, 2, 2)
-        else:
-            temp_nodes = nodes
+    print("Pre processing time(sec): " + str(round(preprocessing_time, 4)))
 
-            nodes = []
-            for i in range(grid_count_horizontal + 1):
-                x = []
-                for j in range(grid_count_vertical + 1):
-                    x.append(node(str(i) + "" + str(j), Point(-1, -1)))
-                nodes.append(x)
-
-            # assigning previous co-ordinates of nodes while scaling up 2
-            for i in range(len(temp_nodes)):
-                for j in range(len(temp_nodes[i])):
-                    nodes[2*i][2*j].loc = temp_nodes[i][j].loc * 2
-
-            for i in range(len(nodes)):
-                for j in range(len(nodes[i])):
-                    if nodes[i][j].loc.x == -1 and nodes[i][j].loc.y == -1:
-                        if i%2==0:
-                            nodes[i][j].loc = nodes[i][j-1].loc.midpoint(nodes[i][j+1].loc)
-                        elif j%2==0:
-                            nodes[i][j].loc = nodes[i-1][j].loc.midpoint(nodes[i+1][j].loc)
-
-            for i in range(1, len(nodes)-1, 2):
-                for j in range(1, len(nodes[i])-1, 2):
-                    if nodes[i][j].loc.x == -1 and nodes[i][j].loc.y == -1:
-                        line_horizontal = Line(nodes[i - 1][j].loc, nodes[i + 1][j].loc)
-                        line_vertical = Line(nodes[i][j - 1].loc, nodes[i][j + 1].loc)
-                        nodes[i][j].loc = line_horizontal.intersection(line_vertical)[0]
-        ######## Node Generation ########
-
-
-        values = np.zeros((grid_count_horizontal, grid_count_vertical))
-
-        h_scale = int(grid_count_horizontal_actual / grid_count_horizontal)
-        v_scale = int(grid_count_vertical_actual / grid_count_vertical)
-        for x in range(grid_count_horizontal):
-            for y in range(grid_count_vertical):
-                values[x][y] = np.sum(values_actual[(h_scale * x):(h_scale * (x+1)),
-                               (v_scale*y):(v_scale * (y+1))])
-
-        values = values / np.sum(values)
-
-        # all values sum to totalarea
-        values = values * grid_count_horizontal * grid_count_vertical
-
-        #poly_draw(output_img_filename, "_stage" + str(stg)+"_before", output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
-
-        # nodes that should not move
-        nodes[0][0].movable = False
-        nodes[0][grid_count_vertical].movable = False
-        nodes[grid_count_horizontal][0].movable = False
-        nodes[grid_count_horizontal][grid_count_vertical].movable = False
-        # print(nodes)
-
-        ###  Image splitting into grid #########
-
-        cpu_count = mp.cpu_count()
-        if ((2*cpu_count) - 1) > (grid_count_horizontal + 1):
-            cpu_count = int(m.ceil((grid_count_horizontal + 1)/2))
-
-        point_to_be_changed_array, point_to_between_thread = pointDPT_based_on_horizontal_points(grid_count_horizontal+1,
-                                                                                                 cpu_count, values,
-                                                                                                 is_max_heiristic,
-                                                                                                 grid_count_horizontal,
-                                                                                                 grid_count_vertical)
-        preprocessing_end_time = time()
-        preprocessing_time = preprocessing_end_time - preprocessing_start_time
-
-        total_preprocessing_time.append(preprocessing_time)
-        print("Pre processing time(sec): " + str(round(preprocessing_time, 4)))
-
+    for x in range(iteration):
         print("------------------------------------------")
-        print("------------------------------------------")
-        print('Stage ' + str(stg+1) + '(out of ' + str(stage_count) + '): ')
-        print("------------------------------------------")
+        print('iteration: ' + str(x+1) + '(out of ' + str(iteration) + '): ')
 
-        iteration = int(m.log(grid_count_horizontal_actual,2) - m.log(grid_count_horizontal, 2)) + 1
-        if stg == (m.log(grid_count_horizontal_actual,2) - 1):
-            iteration  = 3
+        iteration_start_time = time()
 
-        #iteration = int(m.log(grid_count_horizontal, 2))
-        for x in range(iteration):
+        pool = mp.Pool(cpu_count)
+        thread_result = []
+        
+        for th in range(cpu_count):
+            thread_result.append(
+                pool.apply_async(updatedNodeParallelCode,
+                                 args=(point_to_be_changed_array[th], nodes, values, th,
+                                       grid_count_horizontal, grid_count_vertical,)))
+        print("Parallel Code is running")
+        pool.close()
+        pool.join()
+        print("Parallel Code has finished")
 
-            print('iteration: ' + str(x+1) + '(out of ' + str(iteration) + '): ')
-
-            iteration_start_time = time()
-
-            pool = mp.Pool(cpu_count)
-            thread_result = []
-
-            for th in range(cpu_count):
-                thread_result.append(
-                    pool.apply_async(updatedNodeParallelCode,
-                                                      args=(point_to_be_changed_array[th], nodes, values, th,
-                                                            grid_count_horizontal, grid_count_vertical,)))
-
-            print("Parallel Code is running")
-            pool.close()
-            pool.join()
-            print("Parallel Code has finished")
-
-            for th in range(cpu_count):
-                val_array = thread_result[th]._value
-                for count in range(len(val_array)):
-                    updated_x = val_array[count][2]
-                    updated_y = val_array[count][3]
-                    if (updated_x == -1 or updated_y == -1):
-                        temp = 1
-                        # This is nothing
-                    else:
-                        nodes[val_array[count][0]][val_array[count][1]].loc = Point2D(updated_x, updated_y)
-                    #print(val_array[count])
+        for th in range(cpu_count):
+            val_array = thread_result[th]._value
+            for count in range(len(val_array)):
+                updated_x = val_array[count][2]
+                updated_y = val_array[count][3]
+                if (updated_x == -1 or updated_y == -1):
+                    temp = 1
+                    # This is nothing
+                else:
+                    nodes[val_array[count][0]][val_array[count][1]].loc = Point2D(updated_x, updated_y)
+                #print(val_array[count])
 
 
-            pool = mp.Pool(cpu_count)
-            thread_result = []
+        pool = mp.Pool(cpu_count)
+        thread_result = []
 
-            for th in range(cpu_count-1):
-                thread_result.append(
-                    pool.apply_async(updatedNodeParallelCode,
-                                     args=(point_to_between_thread[th], nodes, values, th,
-                                           grid_count_horizontal, grid_count_vertical, )))
+        for th in range(cpu_count-1):
+            thread_result.append(
+                pool.apply_async(updatedNodeParallelCode,
+                                 args=(point_to_between_thread[th], nodes, values, th,
+                                       grid_count_horizontal, grid_count_vertical,)))
 
-            print("Parallel Code(inner boundary) is running")
-            pool.close()
-            pool.join()
-            print("Parallel Code(inner boundary) has finished")
+        print("Parallel Code(inner boundary) is running")
+        pool.close()
+        pool.join()
+        print("Parallel Code(inner boundary) has finished")
 
-            for th in range(cpu_count-1):
-                val_array = thread_result[th]._value
-                for count in range(len(val_array)):
-                    updated_x = val_array[count][2]
-                    updated_y = val_array[count][3]
-                    if (updated_x == -1 or updated_y == -1):
-                        temp = 1
-                        # This is nothing
-                    else:
-                        nodes[val_array[count][0]][val_array[count][1]].loc = Point2D(updated_x, updated_y)
+        for th in range(cpu_count-1):
+            val_array = thread_result[th]._value
+            for count in range(len(val_array)):
+                updated_x = val_array[count][2]
+                updated_y = val_array[count][3]
+                if (updated_x == -1 or updated_y == -1):
+                    temp = 1
+                    # This is nothing
+                else:
+                    nodes[val_array[count][0]][val_array[count][1]].loc = Point2D(updated_x, updated_y)
 
-            iteration_end_time = time()
-            estimation_time = iteration_end_time - iteration_start_time
+        iteration_end_time = time()
+        estimation_time = iteration_end_time - iteration_start_time
 
-            total_algo_processing_time.append(estimation_time)
+        total_algo_processing_time.append(estimation_time)
 
-            #
-            all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, output_img_filename,
-                           x+1, stg, preprocessing_time)
+        #poly_draw(output_img_filename, x+1, output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
+        current_rmse = all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time,
+                                      output_img_filename, x+1, -1, -1)
 
-        #poly_draw(output_img_filename, "_stage" + str(stg) + "_after", output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
+        if current_rmse[0] < 0.005:
+            break
 
 
 
     print("------------------------------------------")
-    total_it_processing_time = np.sum(total_algo_processing_time)
-    total_pre_processing_time = np.sum(total_preprocessing_time)
-    total_time = round(total_it_processing_time + total_pre_processing_time, 4)
-
+    total_time = round(np.sum(total_algo_processing_time) + preprocessing_time, 4)
     print("Total Algorithm Processing Time (sec): " + str(total_time))
 
     output_txt_file = open(out_file_name, "a")
-    output_txt_file.write("\n\nTotal Pre Processing Time(sec): " + str(round(total_pre_processing_time, 4)) + "\n")
+    output_txt_file.write("\n\nTotal Pre Processing Time(sec): " + str(round(preprocessing_time, 4)) + "\n")
     output_txt_file.write("Total Processing Time(sec): " + str(total_time))
     output_txt_file.close()
 
@@ -563,21 +501,10 @@ if __name__ == "__main__":
     print("Algorithm Finished !! ")
     print("Drawing Image ... ")
 
-    poly_draw(output_img_filename, str(iteration) + "_stage" + str(int(m.log(grid_count_horizontal_actual, 2))), output_image_size,
-              nodes, grid_count_horizontal_actual, grid_count_vertical_actual)
-
-    '''
-    print('Generating Carto4F file ...')
-    shapeGenCarto4F(square_grid, values_actual, nodes, "output_shape_carto4F/" + output_img_filename)
-    print('Finished Carto4F file ...')
-
-    print('Generating MaxFlow dat gen file ...')
-    datGenMaxFlowGeneration(square_grid, values_actual, nodes, "output_maxflow/" + output_img_filename)
-    print('Finished MaxFlow dat gen file ...')
-    '''
-    #imageDraw(input_image, nodes, "output_final_" + output_img_filename, grid_count_horizontal_actual, grid_count_vertical_actual)
+    poly_draw(output_img_filename, iteration, output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
+    #imageDraw(input_image.size, splitted_image, nodes, "output", grid_count_horizontal, grid_count_vertical)
     output_image = newImageDraw(input_image, nodes, output_img_filename,
-                                grid_count_horizontal_actual, grid_count_vertical_actual)
+                                grid_count_horizontal, grid_count_vertical)
 
     mse_error = compare_mse(np.asarray(input_image), output_image)
     psnr_error = compare_psnr(np.asarray(input_image), output_image)
@@ -587,6 +514,8 @@ if __name__ == "__main__":
     output_txt_file.write("\n\nMSE : " + str(round(mse_error, 4)) + "\n")
     output_txt_file.write("PSNR : " + str(round(psnr_error, 4)) + "\n")
     output_txt_file.write("SSIM : " + str(round(ssim_error, 4)) + "\n")
+
+    print("Finished")
 
     print("Finished")
 
