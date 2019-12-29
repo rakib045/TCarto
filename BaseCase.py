@@ -5,7 +5,7 @@ from PrescribedAreaDrawingDivideConq import *
 import multiprocessing as mp
 from skimage.measure import *
 
-error_threshold = 0.0001
+
 
 square_grid = 8
 input_data_file = 'input/weight_8_8.txt'
@@ -13,6 +13,12 @@ input_img_file = 'input/weather_tsk.png'
 output_img_filename = 'output_GC'
 
 
+# When is_stop_with_rmse = True, rmse_threshold will work only then. Iteration stops when it crosses rmse less than threshold
+is_stop_with_rmse = True
+rmse_threshold = 0.18
+
+iteration = 30
+error_threshold = 0.0001
 def getWeightedTrianglesBorder(triangle, weight_list):
     first_point_triangle = triangle[0]
     second_point_triangle = triangle[1]
@@ -369,6 +375,13 @@ def findTargetedPointProjection(values, grid_count):
     # End - Weighted Triangle Calculation
     return targeted_nodes
 
+def updatedNodeGeneralCase(nodes, values, targeted_nodes, grid_count_horizontal, grid_count_vertical):
+    for i in range(grid_count_horizontal + 1):
+        for j in range(grid_count_vertical + 1):
+            mid_point = nodes[i][j].loc.midpoint(targeted_nodes[i][j].loc)
+            nodes[i][j].loc = mid_point
+
+    return nodes
 
 def run_GeneralCase(input_img_file, input_data_file, square_grid, output_img_filename):
     grid_count_horizontal_actual = square_grid
@@ -378,7 +391,7 @@ def run_GeneralCase(input_img_file, input_data_file, square_grid, output_img_fil
     input_image = input_image.convert("RGBA")
     output_image_size = input_image.size
 
-    processing_start_time = time()
+    pre_processing_start_time = time()
     values_actual = read_text_file_actual_order(input_data_file, grid_count_horizontal_actual,
                                                 grid_count_vertical_actual)
     values = values_actual / np.sum(values_actual) * square_grid * square_grid
@@ -388,26 +401,81 @@ def run_GeneralCase(input_img_file, input_data_file, square_grid, output_img_fil
     targeted_nodes = findTargetedPointProjection(values, square_grid)
     print("Finished Targeted Nodes Calculation !!!")
 
-    processing_end_time = time()
-    processing_time = processing_end_time - processing_start_time
+    pre_processing_end_time = time()
+    pre_processing_time = pre_processing_end_time - pre_processing_start_time
 
-    out_file_name = "output/" + output_img_filename + "_log.txt"
-    output_txt_file = open(out_file_name, "w")
-    output_txt_file.write("|UV-EV|/EV, UV/EV - 1, RMSE, MQE = (((|UV-EV|/EV) ** 2) ** 0.5)/N, " +
-                          "Updated MQE = (((|UV-EV|/(UV+EV)) ** 2) ** 0.5)/N, " +
-                          "Average Aspect Ratio min(height/width)/max(height/width), " +
-                          "Average Aspect Ratio (height/width), Processing Time(sec)\n")
-    output_txt_file.close()
-    print("Processing time(sec): " + str(round(processing_time, 4)))
+    output_image_path = ''
+    total_algo_iteration_processing_time = []
 
-    poly_draw_top_to_bottom("output_generalCase_", output_image_size, targeted_nodes,
-                            grid_count_horizontal_actual, grid_count_vertical_actual)
-    output_image_path = newImageDrawTopToBottom(input_image, targeted_nodes, output_img_filename + '_image',
-                                           grid_count_horizontal_actual,
-                                           grid_count_vertical_actual)
+    if is_stop_with_rmse:
 
-    all_error_print(values, targeted_nodes, grid_count_horizontal_actual, grid_count_vertical_actual,
-                    processing_time, output_img_filename)
+        out_file_name = "output/" + output_img_filename + "_log.txt"
+        output_txt_file = open(out_file_name, "w")
+        output_txt_file.write("Iteration, |UV-EV|/EV, UV/EV - 1, RMSE, MQE = (((|UV-EV|/EV) ** 2) ** 0.5)/N, " +
+                              "Updated MQE = (((|UV-EV|/(UV+EV)) ** 2) ** 0.5)/N, " +
+                              "Average Aspect Ratio min(height/width)/max(height/width), " +
+                              "Average Aspect Ratio (height/width), Processing Time(sec)\n")
+        output_txt_file.close()
+        print("Pre Processing time(sec): " + str(round(pre_processing_time, 4)))
+
+        nodes = grid_node_generation(node, grid_count_horizontal_actual, grid_count_vertical_actual)
+        nodes[0][0].movable = False
+        nodes[0][grid_count_vertical_actual].movable = False
+        nodes[grid_count_horizontal_actual][0].movable = False
+        nodes[grid_count_horizontal_actual][grid_count_vertical_actual].movable = False
+
+
+
+        for x in range(iteration):
+
+            print("------------------------------------------")
+            print('iteration: ' + str(x + 1) + '(out of ' + str(iteration) + '): ')
+            iteration_start_time = time()
+            nodes = updatedNodeGeneralCase(nodes, values, targeted_nodes,
+                                           grid_count_horizontal_actual, grid_count_vertical_actual)
+            iteration_end_time = time()
+            estimation_time = iteration_end_time - iteration_start_time
+
+            total_algo_iteration_processing_time.append(estimation_time)
+
+            #poly_draw_top_to_bottom("output_generalCase_It_" + str(x + 1), [800, 800], nodes,
+            #                        grid_count_horizontal_actual, grid_count_vertical_actual)
+
+            current_rmse = all_error_print(values, nodes, grid_count_horizontal_actual, grid_count_vertical_actual,
+                                           estimation_time, output_img_filename, (x + 1))
+
+            if current_rmse[0] < rmse_threshold:
+                break
+
+        poly_draw_top_to_bottom("output_generalCase", output_image_size, nodes,
+                                grid_count_horizontal_actual, grid_count_vertical_actual)
+
+        output_image_path = newImageDrawTopToBottom(input_image, nodes, output_img_filename + '_image',
+                                                    grid_count_horizontal_actual,
+                                                    grid_count_vertical_actual)
+
+        output_txt_file = open(out_file_name, "a")
+        output_txt_file.write("\n\nPre-Processing Time(sec): " + str(round(pre_processing_time, 4)))
+        output_txt_file.close()
+
+
+    else:
+        out_file_name = "output/" + output_img_filename + "_log.txt"
+        output_txt_file = open(out_file_name, "w")
+        output_txt_file.write("|UV-EV|/EV, UV/EV - 1, RMSE, MQE = (((|UV-EV|/EV) ** 2) ** 0.5)/N, " +
+                              "Updated MQE = (((|UV-EV|/(UV+EV)) ** 2) ** 0.5)/N, " +
+                              "Average Aspect Ratio min(height/width)/max(height/width), " +
+                              "Average Aspect Ratio (height/width), Processing Time(sec)\n")
+        output_txt_file.close()
+        print("Processing time(sec): " + str(round(pre_processing_time, 4)))
+        poly_draw_top_to_bottom("output_generalCase_errorless", output_image_size, targeted_nodes,
+                                grid_count_horizontal_actual, grid_count_vertical_actual)
+        output_image_path = newImageDrawTopToBottom(input_image, targeted_nodes, output_img_filename + '_errorless_image',
+                                               grid_count_horizontal_actual,
+                                               grid_count_vertical_actual)
+
+        all_error_print(values, targeted_nodes, grid_count_horizontal_actual, grid_count_vertical_actual,
+                        pre_processing_time, output_img_filename)
 
     output_image = Image.open(output_image_path)
     out_image = np.asarray(output_image.convert("RGBA"))
@@ -416,6 +484,8 @@ def run_GeneralCase(input_img_file, input_data_file, square_grid, output_img_fil
     mse_error = compare_mse(in_image, out_image)
     psnr_error = compare_psnr(in_image, out_image)
     ssim_error = compare_ssim(in_image, out_image, multichannel=True)
+
+    processing_time = pre_processing_time + np.sum(total_algo_iteration_processing_time)
 
     output_txt_file = open(out_file_name, "a")
     output_txt_file.write("\n\nTotal Processing Time(sec): " + str(round(processing_time, 4)) + "\n")
