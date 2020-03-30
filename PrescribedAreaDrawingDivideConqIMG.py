@@ -51,10 +51,10 @@ output_img_filename = sys.argv[3]
 input_img_file = sys.argv[4]
 '''
 
-square_grid = 8
-input_data_file = 'input/weight_8_8.txt'
-output_img_filename = 'output_DivCon'
-input_img_file = "input/weather_tsk.png"
+square_grid = 64
+input_data_file = 'input/orange_apple_banana_weight_64_64.txt'
+output_img_filename = 'output_DivCon_orange_apple_banana'
+input_img_file = "input/orange_apple_banana.jpg"
 
 
 grid_count_horizontal_actual = square_grid

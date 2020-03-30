@@ -7,10 +7,10 @@ matplotlib.use("agg")
 from matplotlib import pyplot
 from pandas import DataFrame
 
-grid = 64
+grid = 32
 file_path = "Datasets/GeneratedData/"
-file_name = "PBLH_grid64_64.txt"
-output_file_name = "PBLH_grid64_64"
+file_name = "flow_data32_32.txt"
+output_file_name = "flow_data32_32"
 input_weighted_file_name = file_path + file_name
 
 

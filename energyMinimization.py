@@ -696,7 +696,7 @@ def all_error_print(values, nodes, grid_count_horizontal, grid_count_vertical, e
                 area = abs(pol.area)
                 updated_values[j][i] = area
 
-                bounding_box = pol.bounds;
+                bounding_box = pol.bounds
                 height = abs(bounding_box[3] - bounding_box[1])
                 width = abs(bounding_box[2] - bounding_box[0])
                 aspect_ratio_m1[j][i] = height/width
@@ -1046,6 +1046,151 @@ def newImageDrawTopToBottom(input_image, nodes, filename, grid_count_horizontal,
     output_path = 'output/' + filename + '.png'
 
     plt.imsave(output_path, out)
+    return output_path
+
+def imageDrawBrighnessChannelTopToBottom(input_img_file, nodes, weights, filename, grid_count_horizontal, grid_count_vertical):
+    input_image = Image.open(input_img_file)
+
+    output_image_size = input_image.size
+    x_unit = int(output_image_size[0] / grid_count_horizontal)
+    y_unit = int(output_image_size[1] / grid_count_vertical)
+
+    min_sat_range = 0
+    max_sat_range = 255
+    min_sat_val = np.min(weights)
+    max_sat_val = np.max(weights)
+
+    min_light_range = 0
+    max_light_range = 255
+    min_light_val = np.min(weights)
+    max_light_val = np.max(weights)
+
+    out = input_image.convert("HSV")
+    pixels = out.load()
+    x_grid = 0
+    y_grid = 0
+    y_grid_prev_row = 0
+
+    is_within_polygon = False
+    is_on_top_polygon = 1000
+
+    for j in range(input_image.size[1]-1, -1, -1):  # for every col:
+        for i in range(input_image.size[1]):  # For every row
+
+            if i == 0:
+                y_grid_prev_row = y_grid
+
+            x_coord = i / output_image_size[0] * grid_count_horizontal
+            y_coord = (input_image.size[1] - j) / output_image_size[1] * grid_count_vertical
+
+            p_top_left = nodes[x_grid][y_grid].loc
+            p_top_right = nodes[x_grid + 1][y_grid].loc
+            p_bottom_right = nodes[x_grid + 1][y_grid + 1].loc
+            p_bottom_left = nodes[x_grid][y_grid + 1].loc
+
+            poly = Polygon((p_top_left[0], (p_top_left[1])),
+                           (p_top_right[0], (p_top_right[1])),
+                           (p_bottom_right[0], (p_bottom_right[1])),
+                           (p_bottom_left[0], (p_bottom_left[1])))
+
+            is_within_polygon = poly.encloses_point(Point(x_coord, y_coord))
+            is_on_top_polygon = poly.distance(Point(x_coord, y_coord))
+
+            if not is_within_polygon and is_on_top_polygon > 0:
+                flag_in = False
+
+                ii = x_grid + 1
+                jj = y_grid
+
+                # Right Side Grid
+                if 0 <= ii < grid_count_horizontal:
+                    if 0 <= jj < grid_count_vertical:
+                        p_top_left = nodes[ii][jj].loc
+                        p_top_right = nodes[ii+1][jj].loc
+                        p_bottom_right = nodes[ii+1][jj+1].loc
+                        p_bottom_left = nodes[ii][jj+1].loc
+                        poly = Polygon((p_top_left[0], (p_top_left[1])),
+                                       (p_top_right[0], (p_top_right[1])),
+                                       (p_bottom_right[0], (p_bottom_right[1])),
+                                       (p_bottom_left[0], (p_bottom_left[1])))
+
+                        is_within_polygon = poly.encloses_point(Point(x_coord, y_coord))
+                        is_on_top_polygon = poly.distance(Point(x_coord, y_coord))
+                        if is_within_polygon or is_on_top_polygon == 0:
+                            x_grid = ii
+                            y_grid = jj
+                            flag_in = True
+
+                # Bottom Side Grid
+                if not flag_in:
+                    ii = x_grid
+                    jj = y_grid + 1
+
+                    if 0 <= ii < grid_count_horizontal:
+                        if 0 <= jj < grid_count_vertical:
+                            p_top_left = nodes[ii][jj].loc
+                            p_top_right = nodes[ii + 1][jj].loc
+                            p_bottom_right = nodes[ii + 1][jj + 1].loc
+                            p_bottom_left = nodes[ii][jj + 1].loc
+                            poly = Polygon((p_top_left[0], (p_top_left[1])),
+                                           (p_top_right[0], (p_top_right[1])),
+                                           (p_bottom_right[0], (p_bottom_right[1])),
+                                           (p_bottom_left[0], (p_bottom_left[1])))
+
+                            is_within_polygon = poly.encloses_point(Point(x_coord, y_coord))
+                            is_on_top_polygon = poly.distance(Point(x_coord, y_coord))
+                            if is_within_polygon or is_on_top_polygon == 0:
+                                x_grid = ii
+                                y_grid = jj
+                                flag_in = True
+
+                # Top Side Grid
+                if not flag_in:
+                    ii = x_grid
+                    jj = y_grid + 1
+
+                    # Bottom Side Grid
+                    if 0 <= ii < grid_count_horizontal:
+                        if 0 <= jj < grid_count_vertical:
+                            p_top_left = nodes[ii][jj].loc
+                            p_top_right = nodes[ii + 1][jj].loc
+                            p_bottom_right = nodes[ii + 1][jj + 1].loc
+                            p_bottom_left = nodes[ii][jj + 1].loc
+                            poly = Polygon((p_top_left[0], (p_top_left[1])),
+                                           (p_top_right[0], (p_top_right[1])),
+                                           (p_bottom_right[0], (p_bottom_right[1])),
+                                           (p_bottom_left[0], (p_bottom_left[1])))
+
+                            is_within_polygon = poly.encloses_point(Point(x_coord, y_coord))
+                            is_on_top_polygon = poly.distance(Point(x_coord, y_coord))
+                            if is_within_polygon or is_on_top_polygon == 0:
+                                x_grid = ii
+                                y_grid = jj
+
+
+            pix_val_light = min_light_range + (
+                    weights[grid_count_vertical-1-y_grid][x_grid] - min_light_val) / (
+                                    max_light_val - min_light_val) * (max_light_range - min_light_range)
+
+            pix_val_sat = min_sat_range + (
+                    weights[grid_count_vertical-1-y_grid][x_grid] - min_sat_val) / (
+                                  max_sat_val - min_sat_val) * (max_sat_range - min_sat_range)
+
+            pixels[i, j] = (int(pixels[i, j][0]),
+                            int(pixels[i, j][1]),
+                            int(pix_val_light))
+
+        print("(i,j):(" + str(i) + "," + str(j) + ")")
+        x_grid = 0
+        y_grid = y_grid_prev_row
+        out.show()
+    #out.show()
+
+
+
+    output_path = 'output/' + filename + '.png'
+    out = out.convert("RGBA")
+    out.save(output_path, 'PNG')
     return output_path
 ################ image drawing ####################################
 

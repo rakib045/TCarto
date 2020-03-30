@@ -3,17 +3,17 @@ import csv
 from collections import Counter
 import itertools
 
-square_grid = 32
-input_data_file = "input/weight_info_pasta.csv"
-input_image_file = "input/pasta_image_annotated.png"
-output_weight_filename = "pasta_weight_32_32"
+square_grid = 64
+input_data_file = "input/weight_info_donut_apple.csv"
+input_image_file = "input/donut_apple_mask.png"
+output_weight_filename = "donut_apple_fat_weight_64_64"
 
 color_column_name = "COLOR"
-weight_column_name = "CALORIE"
+weight_column_name = "FAT"
 label_column_name = "ITEM"
 
 neutral_color = "#000000"
-neutral_color_weight = square_grid * square_grid
+#neutral_color_weight = 30
 min_weight_range = 1
 max_weight_range = 5
 
@@ -49,6 +49,7 @@ with open(input_data_file, 'r') as csvFile:
         nameOrderedList.append(row[label_column_name])
 csvFile.close()
 colorOrderedList.append(neutral_color)
+neutral_color_weight = min(weightOrderedList) / 2
 weightOrderedList.append(neutral_color_weight)
 weightOrderedList = np.array(weightOrderedList)
 print("Finished Weight-CSV file !!")
