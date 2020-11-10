@@ -151,7 +151,7 @@ output_txt_file = open(out_file_name, "w")
 count = 1
 for i in range(grid_count_horizontal):
     for j in range(grid_count_vertical):
-        output_txt_file.write(str(calculated_weight_per_grid[i][j]))
+        output_txt_file.write(str(format(calculated_weight_per_grid[i][j], '.4f')))
         if count != grid_count_horizontal * grid_count_vertical:
             output_txt_file.write(", ")
             if (count % grid_count_horizontal == 0):

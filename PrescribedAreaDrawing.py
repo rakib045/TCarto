@@ -55,14 +55,13 @@ input_data_file = "input/data_cat_16_16.txt"
 output_img_filename = "SingleThread_Gaussian_16_16"
 '''
 
-square_grid = 2
-iteration = 40
-input_data_file = "input/TCarto_checker_data_8_8.txt"
-output_img_filename = "DivideAndConq_TCarto_checker_data_8_8"
+square_grid = 8
+iteration = 10
+input_data_file = "input/Aggregation_cluster_3_grid_8_8.txt"
+output_img_filename = "TCarto_Aggregation_cluster_3_grid_8_8"
 
 grid_count_horizontal = square_grid
 grid_count_vertical = square_grid
-
 
 
 output_image_size = [1024, 1024]

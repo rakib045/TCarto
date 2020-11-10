@@ -1,0 +1,9 @@
+|UV-EV|/EV, UV/EV - 1, RMSE, MQE = (((|UV-EV|/EV) ** 2) ** 0.5)/N, Updated MQE = (((|UV-EV|/(UV+EV)) ** 2) ** 0.5)/N, Average Aspect Ratio min(height/width)/max(height/width), Average Aspect Ratio (height/width), Processing Time(sec)
+0.0001, -0.0, 0.0001, 0.0, 2e-06, 25.78934, 0.116359, 443.3352
+
+
+Total Processing Time(sec): 443.3352
+
+MSE : 520.5043
+PSNR : 20.9666
+SSIM : 0.5491
