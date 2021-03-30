@@ -55,13 +55,14 @@ input_data_file = "input/data_cat_16_16.txt"
 output_img_filename = "SingleThread_Gaussian_16_16"
 '''
 
-square_grid = 8
-iteration = 10
-input_data_file = "input/Aggregation_cluster_3_grid_8_8.txt"
-output_img_filename = "TCarto_Aggregation_cluster_3_grid_8_8"
+square_grid = 2
+iteration = 40
+input_data_file = "input/TCarto_checker_data_8_8.txt"
+output_img_filename = "DivideAndConq_TCarto_checker_data_8_8"
 
 grid_count_horizontal = square_grid
 grid_count_vertical = square_grid
+
 
 
 output_image_size = [1024, 1024]
@@ -171,7 +172,11 @@ for x in range(iteration):
                 checkSignVal_2 = isSatisfyInEquility(val, TR_V_Line)
 
                 if checkSignVal_1 >= 0 and checkSignVal_2 >= 0 and boundary_node_movement:
-                    nodes[i][j].loc = val
+                    poly_1 = Polygon(val, p_bottom.loc, p_bottom_right.loc, p_right.loc)
+                    poly_2 = Polygon(val, p_right.loc, p_top_right.loc, p_top.loc)
+
+                    if poly_1.is_convex() and poly_2.is_convex():
+                        nodes[i][j].loc = val
 
                 continue
             elif(i == grid_count_horizontal):
@@ -214,7 +219,11 @@ for x in range(iteration):
 
 
                 if checkSignVal_1 <= 0 and checkSignVal_2 <= 0 and boundary_node_movement:
-                    nodes[i][j].loc = val
+                    poly_1 = Polygon(val, p_left.loc, p_bottom_left.loc, p_bottom.loc)
+                    poly_2 = Polygon(val, p_top.loc, p_top_left.loc, p_left.loc)
+
+                    if poly_1.is_convex() and poly_2.is_convex():
+                        nodes[i][j].loc = val
                 continue
             elif(j == 0):
                 #TODO: Replace 'continue' with your own code
@@ -255,7 +264,11 @@ for x in range(iteration):
                 checkSignVal_2 = isSatisfyInEquility(val, TR_H_Line)
 
                 if checkSignVal_1 >= 0 and checkSignVal_2 >= 0 and boundary_node_movement:
-                    nodes[i][j].loc = val
+                    poly_1 = Polygon(val, p_top.loc, p_top_left.loc, p_left.loc)
+                    poly_2 = Polygon(val, p_right.loc, p_top_right.loc, p_top.loc)
+
+                    if poly_1.is_convex() and poly_2.is_convex():
+                        nodes[i][j].loc = val
                 continue
             elif(j == grid_count_vertical):
                 #TODO: Replace 'continue' with your own code
@@ -297,7 +310,11 @@ for x in range(iteration):
 
 
                 if checkSignVal_1 <= 0 and checkSignVal_2 <= 0 and boundary_node_movement:
-                    nodes[i][j].loc = val
+                    poly_1 = Polygon(val, p_left.loc, p_bottom_left.loc, p_bottom.loc)
+                    poly_2 = Polygon(val, p_bottom.loc, p_bottom_right.loc, p_right.loc)
+
+                    if poly_1.is_convex() and poly_2.is_convex():
+                        nodes[i][j].loc = val
 
                 continue
             else:
@@ -329,7 +346,13 @@ for x in range(iteration):
                 if (val[0] == -1 and val[1] == -1):
                     continue
 
-                nodes[i][j].loc = val
+                poly_1 = Polygon(val, p_top.loc, p_top_left.loc, p_left.loc)
+                poly_2 = Polygon(val, p_left.loc, p_bottom_left.loc, p_bottom.loc)
+                poly_3 = Polygon(val, p_bottom.loc, p_bottom_right.loc, p_right.loc)
+                poly_4 = Polygon(val, p_right.loc, p_top_right.loc, p_top.loc)
+
+                if poly_1.is_convex() and poly_2.is_convex() and poly_3.is_convex() and poly_4.is_convex():
+                    nodes[i][j].loc = val
 
             #poly_draw(output_img_filename, x+1, output_image_size, nodes, grid_count_horizontal, grid_count_vertical)
             #print("Updated val : " + str(val.x) + ", " + str(val.y))

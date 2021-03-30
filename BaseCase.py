@@ -6,15 +6,26 @@ import multiprocessing as mp
 from skimage.measure import *
 
 
+#python BaseCase.py 8 "input/weight_8_8.txt" "input/weather_tsk.png" "output_GC"
+# First param = python file name
+# Second Param = square grid
+# Third Param = Input Data File
+# Forth Param = Input Image File
+# Fifth Param = Output File Name
 
-square_grid = 8
-input_data_file = 'input/weight_8_8.txt'
-input_img_file = 'input/weather_tsk.png'
-output_img_filename = 'output_GC'
+square_grid = int(sys.argv[1])
+input_data_file = sys.argv[2]
+input_img_file = sys.argv[3]
+output_img_filename = sys.argv[4]
 
+
+#square_grid = 8
+#input_data_file = 'input/weight_8_8.txt'
+#input_img_file = 'input/weather_tsk.png'
+#output_img_filename = 'output_GC'
 
 # When is_stop_with_rmse = True, rmse_threshold will work only then. Iteration stops when it crosses rmse less than threshold
-is_stop_with_rmse = True
+is_stop_with_rmse = False
 rmse_threshold = 0.18
 
 iteration = 30

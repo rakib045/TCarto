@@ -1,0 +1,6 @@
+|UV-EV|/EV, UV/EV - 1, RMSE, MQE = (((|UV-EV|/EV) ** 2) ** 0.5)/N, Updated MQE = (((|UV-EV|/(UV+EV)) ** 2) ** 0.5)/N, Average Aspect Ratio (height/width),Average Aspect Ratio min(height/width)/max(height/width)
+0.0068, -0.0016, 0.0101, 0.0006, 0.000317, 1.063066, 0.744372
+
+MSE : 1209.247
+PSNR : 17.3057
+SSIM : 0.5639

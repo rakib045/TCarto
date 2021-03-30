@@ -12,7 +12,7 @@ null_grid_weight = 0.8
 centers = [(1, 1), (0.1, 0.1), (0.5, 0.45)]
 filepath = "Datasets/GeneratedData/"
 # grid=[2,4,8,16,32,64,128,256,512,1024]
-grid = [8]
+grid = [16]
 zero_zero_val = 1.0
 zero_one_val = 10.0
 

@@ -7,7 +7,6 @@ import colorsys
 import math
 
 square_grid = 128
-
 input_image_file = "input/LowLightImageEnhancement.png"
 output_weight_filename = "input/LowLightImageEnhancement_lightness_weight_128_128.txt"
 

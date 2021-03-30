@@ -39,22 +39,26 @@ class node:
 # the name of a node at point i,j is ij
 
 
-#python PrescribedAreaDrawingDivideConqIMG_MosaicGen.py 64 "input/PBLH_10_new_grid64_64.txt" "DivConImg_PBLH_10_new_grid64_64" "input/weather_tsk.png"
+#python PrescribedAreaDrawingDivideConqIMG_MosaicGen.py 32 "input/Mosaic03_mosaic_randomweight_32_32.txt" "input/GI_21.png" "output_DivCon_mosaic_randomweight_32_32"
 # First param = python file name
 # Second Param = square grid
 # Third Param = Input Data File
-# Forth Param = Output File Name
-'''
+# Forth Param = Input Image File
+# Fifth Param = Output File Name
+
+
 square_grid = int(sys.argv[1])
 input_data_file = sys.argv[2]
-output_img_filename = sys.argv[3]
-input_img_file = sys.argv[4]
-'''
+output_img_filename = sys.argv[4]
+input_img_file = sys.argv[3]
 
-square_grid = 16
-input_data_file = 'input/Mosaic02_mosaic_randomweight_16_16.txt'
-output_img_filename = 'output_DivCon_mosaic_randomweight_16_16'
-input_img_file = "input/mosaic02.jpg"
+
+'''
+square_grid = 32
+input_data_file = "input/Mosaic03_mosaic_randomweight_32_32.txt"
+input_img_file = "input/GI_21.png"
+output_img_filename = 'output_DivCon_mosaic_randomweight_32_32'
+'''
 
 
 grid_count_horizontal_actual = square_grid
@@ -117,14 +121,18 @@ def updatedNodeParallelCode(points, nodes, values, thread_count, grid_count_hori
             BR_V_Line = Line(p_bottom_right.loc, p_right.loc)
             TR_V_Line = Line(p_right.loc, p_top_right.loc)
 
-            val = Point(nodes[i][j].loc[0], updated_y)
+            val = Point2D(nodes[i][j].loc[0], updated_y)
 
             checkSignVal_1 = isSatisfyInEquility(val, BR_V_Line)
             checkSignVal_2 = isSatisfyInEquility(val, TR_V_Line)
 
             if checkSignVal_1 >= 0 and checkSignVal_2 >= 0 and boundary_node_movement:
-                nodes[i][j].loc = val
-                points_array.append([i, j, nodes[i][j].loc[0], updated_y])
+                poly_1 = Polygon(val, p_bottom.loc, p_bottom_right.loc, p_right.loc)
+                poly_2 = Polygon(val, p_right.loc, p_top_right.loc, p_top.loc)
+
+                if poly_1.is_convex() and poly_2.is_convex():
+                    nodes[i][j].loc = val
+                    points_array.append([i, j, nodes[i][j].loc[0], updated_y])
                 continue
 
         elif (i == grid_count_horizontal):
@@ -166,8 +174,12 @@ def updatedNodeParallelCode(points, nodes, values, thread_count, grid_count_hori
             checkSignVal_2 = isSatisfyInEquility(val, TL_V_Line)
 
             if checkSignVal_1 <= 0 and checkSignVal_2 <= 0 and boundary_node_movement:
-                nodes[i][j].loc = val
-                points_array.append([i, j, nodes[i][j].loc[0], updated_y])
+                poly_1 = Polygon(val, p_left.loc, p_bottom_left.loc, p_bottom.loc)
+                poly_2 = Polygon(val, p_top.loc, p_top_left.loc, p_left.loc)
+
+                if poly_1.is_convex() and poly_2.is_convex():
+                    nodes[i][j].loc = val
+                    points_array.append([i, j, nodes[i][j].loc[0], updated_y])
                 continue
 
         elif (j == 0):
@@ -209,8 +221,12 @@ def updatedNodeParallelCode(points, nodes, values, thread_count, grid_count_hori
             checkSignVal_2 = isSatisfyInEquility(val, TR_H_Line)
 
             if checkSignVal_1 >= 0 and checkSignVal_2 >= 0 and boundary_node_movement:
-                nodes[i][j].loc = val
-                points_array.append([i, j, updated_x, nodes[i][j].loc[1]])
+                poly_1 = Polygon(val, p_top.loc, p_top_left.loc, p_left.loc)
+                poly_2 = Polygon(val, p_right.loc, p_top_right.loc, p_top.loc)
+
+                if poly_1.is_convex() and poly_2.is_convex():
+                    nodes[i][j].loc = val
+                    points_array.append([i, j, updated_x, nodes[i][j].loc[1]])
                 continue
 
         elif (j == grid_count_vertical):
@@ -252,8 +268,12 @@ def updatedNodeParallelCode(points, nodes, values, thread_count, grid_count_hori
             checkSignVal_2 = isSatisfyInEquility(val, BR_H_Line)
 
             if checkSignVal_1 <= 0 and checkSignVal_2 <= 0 and boundary_node_movement:
-                nodes[i][j].loc = val
-                points_array.append([i, j, updated_x, nodes[i][j].loc[1]])
+                poly_1 = Polygon(val, p_left.loc, p_bottom_left.loc, p_bottom.loc)
+                poly_2 = Polygon(val, p_bottom.loc, p_bottom_right.loc, p_right.loc)
+
+                if poly_1.is_convex() and poly_2.is_convex():
+                    nodes[i][j].loc = val
+                    points_array.append([i, j, updated_x, nodes[i][j].loc[1]])
                 continue
 
         else:
@@ -284,8 +304,14 @@ def updatedNodeParallelCode(points, nodes, values, thread_count, grid_count_hori
                 temp = 1
                 # this is nothing
             else:
-                nodes[i][j].loc = val
-                points_array.append([i, j, val[0], val[1]])
+                poly_1 = Polygon(val, p_top.loc, p_top_left.loc, p_left.loc)
+                poly_2 = Polygon(val, p_left.loc, p_bottom_left.loc, p_bottom.loc)
+                poly_3 = Polygon(val, p_bottom.loc, p_bottom_right.loc, p_right.loc)
+                poly_4 = Polygon(val, p_right.loc, p_top_right.loc, p_top.loc)
+
+                if poly_1.is_convex() and poly_2.is_convex() and poly_3.is_convex() and poly_4.is_convex():
+                    nodes[i][j].loc = val
+                    points_array.append([i, j, val[0], val[1]])
                 continue
 
         points_array.append([i, j, -1, -1])

@@ -99,27 +99,6 @@ def read_text_file(input_data_file, grid_horiz, grid_vert):
     return values
 
 ################### Read From Input File #######################
-'''
-def quadprog_solve_qp(P, q, G=None, h=None, A=None, b=None):
-    qp_G = .5 * (P + P.T)   # make sure P is symmetric
-    qp_a = -q
-    output = []
-
-    if A is not None:
-        qp_C = -np.vstack([A, G]).T
-        qp_b = -np.hstack([b, h])
-        meq = A.shape[0]
-    else:  # no equality constraint
-        qp_C = -G.T
-        qp_b = -h
-        meq = 0
-    try:
-        output = quadprog.solve_qp(qp_G, qp_a, qp_C, qp_b, meq)[0]
-    except ValueError:
-        print("Error")
-        output = [-1, -1]
-    return output
-'''
 def cvxopt_solve_qp(P, q, G=None, h=None, A=None, b=None):
     P = .5 * (P + P.T)  # make sure P is symmetric
     args = [matrix(P), matrix(q)]
@@ -587,6 +566,82 @@ def point_in_poly(x, y, poly):
 
 
 ################# Error Calculation ###############################
+def all_error_calc_max_flow(values, nodes, grid_count_horizontal, grid_count_vertical, out_log_file_name):
+    updated_values = np.zeros((grid_count_horizontal, grid_count_vertical))
+    aspect_ratio_m1 = np.zeros((grid_count_horizontal, grid_count_vertical))
+    aspect_ratio_m2 = np.zeros((grid_count_horizontal, grid_count_vertical))
+
+    for ii in range(grid_count_horizontal):
+        for jj in range(grid_count_vertical):
+
+            try:
+                p_bottom_left = nodes[ii][jj]
+                p_left = nodes[ii][jj + 1]
+                p_middle = nodes[ii + 1][jj + 1]
+                p_bottom = nodes[ii + 1][jj]
+
+                pol = Polygon(p_bottom.loc, p_middle.loc, p_left.loc, p_bottom_left.loc)
+                area = abs(pol.area)
+                updated_values[ii][jj] = round(area, 2)
+
+                bounding_box = pol.bounds
+                height = abs(bounding_box[3] - bounding_box[1])
+                width = abs(bounding_box[2] - bounding_box[0])
+                aspect_ratio_m1[ii][jj] = height / width
+                aspect_ratio_m2[ii][jj] = min(height, width) / max(height, width)
+
+            except ValueError:
+                # print("No solution...")
+                area = 0
+
+            except AttributeError:
+                area = 0
+
+    N = grid_count_horizontal * grid_count_vertical
+
+    updated_diff = (abs(updated_values - values))
+    error_array = updated_diff / values
+
+    total_error = (np.sum(error_array) / N)
+
+    fast_flow_error = (updated_values / values) - 1
+    total_fast_flow_error = (np.sum(fast_flow_error) / N)
+
+    squared_error_list = (updated_diff / values) ** 2
+    total_rmse_error = (np.sum(squared_error_list) / N) ** 0.5
+    weighter_rmse_error = (np.sum(values * squared_error_list) ) ** 0.5
+
+    total_mqe_error = ((np.sum(squared_error_list)) ** 0.5) / N
+
+    updated_squared_error_list = (updated_diff / (updated_values + values)) ** 2
+    updated_total_mqe_error = ((np.sum(updated_squared_error_list)) ** 0.5) / N
+
+    average_aspect_ratio_m1 = np.average(aspect_ratio_m1)
+    average_aspect_ratio_m2 = np.average(aspect_ratio_m2)
+
+    print("Error Rate : " + str(round(total_error, 4)))
+    print("Updated Error Rate : " + str(round(total_fast_flow_error, 4)))
+    print("RMSE Error Rate : " + str(round(total_rmse_error, 4)))
+    print("Weighted RMSE Error Rate : " + str(round(weighter_rmse_error, 4)))
+    print("MQE Error Rate : " + str(round(total_mqe_error, 4)))
+    print("Updated MQE Error Rate : " + str(round(updated_total_mqe_error, 6)))
+    print("Average Aspect Ratio (height/width) : " + str(round(average_aspect_ratio_m1, 6)))
+    print("Average Aspect Ratio min(height/width)/max(height/width) : " + str(round(average_aspect_ratio_m2, 6)))
+    print("------------------------------------------")
+
+    out_file_name = out_log_file_name
+    output_txt_file = open(out_file_name, "a")
+    output_txt_file.write(str(round(total_error,4)) + ", ")
+    output_txt_file.write(str(round(total_fast_flow_error, 4)) + ", ")
+    output_txt_file.write(str(round(total_rmse_error, 4)) + ", ")
+    output_txt_file.write(str(round(total_mqe_error, 4)) + ", ")
+    output_txt_file.write(str(round(updated_total_mqe_error, 6)) + ", ")
+    output_txt_file.write(str(round(average_aspect_ratio_m1, 6)) + ", ")
+    output_txt_file.write(str(round(average_aspect_ratio_m2, 6)))
+    output_txt_file.close()
+
+    return total_rmse_error, updated_total_mqe_error, average_aspect_ratio_m1, average_aspect_ratio_m2
+
 
 def all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, out_log_file_name,
                    iteration, stage=-1, preprocessing_time=-1):
@@ -623,9 +678,9 @@ def all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, es
     N = grid_count_horizontal * grid_count_vertical
 
     updated_diff = (abs(updated_values - values))
-    error_list = updated_diff / values
+    error_array = updated_diff / values
 
-    total_error = (np.sum(error_list) / N)
+    total_error = (np.sum(error_array) / N)
 
     fast_flow_error = (updated_values / values) - 1
     total_fast_flow_error = (np.sum(fast_flow_error) / N)
@@ -654,6 +709,7 @@ def all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, es
         print("Pre Processing Time: " + str(round(preprocessing_time, 4)) + " sec")
 
     print("Processing Time: " + str(round(estimation_time, 4)) + " sec")
+
     print("------------------------------------------")
 
     out_file_name = "output/out_log_" + out_log_file_name + ".txt"
@@ -674,7 +730,7 @@ def all_error_calc(values, nodes, grid_count_horizontal, grid_count_vertical, es
     output_txt_file.write(str(round(estimation_time,4)) + "\n")
     output_txt_file.close()
 
-    return round(total_rmse_error, 4), error_list, updated_values, values
+    return round(total_rmse_error, 4), error_array, updated_values, values
 
 def all_error_print(values, nodes, grid_count_horizontal, grid_count_vertical, estimation_time, out_log_file_name,
                     iteration=-1, stage=-1):
@@ -769,6 +825,8 @@ def all_error_print(values, nodes, grid_count_horizontal, grid_count_vertical, e
 def poly_draw(filename, it, im_size, nodes, grid_count_horizontal, grid_count_vertical):
     # Create an empty image
 
+    count_concave = 0
+
     factor_x = int(im_size[0] / grid_count_horizontal)
     factor_y = int(im_size[1] / grid_count_vertical)
 
@@ -788,19 +846,56 @@ def poly_draw(filename, it, im_size, nodes, grid_count_horizontal, grid_count_ve
                           Point2D(nodes[i+1][j].loc.x, (grid_count_vertical - nodes[i+1][j].loc.y)))
             area = abs(pol.area)
 
-            '''
-            if area > imp_cell_threshold:
-                colour = ["green", "yellow"]
-            else:                
-                colour = ["#fee0d2", "#de2d26", "#e5f5e0", "#31a354"]
-                #colour = ["red", "blue"]
+            if not pol.is_convex():
+                count_concave += 1
+                d.polygon(
+                    [tuple(Point2D(nodes[i][j].loc.x * factor_x, (grid_count_vertical - nodes[i][j].loc.y) * factor_y))
+                        , tuple(Point2D(nodes[i][j - 1].loc.x * factor_x,
+                                        (grid_count_vertical - nodes[i][j - 1].loc.y) * factor_y))
+                        , tuple(Point2D(nodes[i + 1][j - 1].loc.x * factor_x,
+                                        (grid_count_vertical - nodes[i + 1][j - 1].loc.y) * factor_y))
+                        , tuple(Point2D(nodes[i + 1][j].loc.x * factor_x,
+                                        (grid_count_vertical - nodes[i + 1][j].loc.y) * factor_y))]
+                    , fill="red", outline="red")
+            else:
+                d.polygon(
+                    [tuple(Point2D(nodes[i][j].loc.x * factor_x, (grid_count_vertical - nodes[i][j].loc.y) * factor_y))
+                        , tuple(Point2D(nodes[i][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i][j - 1].loc.y) * factor_y))
+                        , tuple(Point2D(nodes[i + 1][j - 1].loc.x * factor_x,(grid_count_vertical - nodes[i + 1][j - 1].loc.y) * factor_y))
+                        , tuple(Point2D(nodes[i + 1][j].loc.x * factor_x,(grid_count_vertical - nodes[i + 1][j].loc.y) * factor_y))]
+                    , fill="black", outline="cyan")
+            #d.text(Point2D(nodes[i][j].loc.x * factor_x,
+            #              (grid_count_vertical - nodes[i][j].loc.y) * factor_y), str(i)+ "_" +str(j))
+    imagestring = 'output//' + filename + '_table_cartogram-' + str(grid_count_horizontal) + '_' + str(grid_count_vertical) \
+                  + ' iterations' + str((it)) + '.png'
+    img.save(imagestring)
+    print("\nNumber of Concave polygon : " + str(count_concave))
 
-            d.polygon([tuple(Point2D(nodes[i][j].loc.x * factor_x, (grid_count_vertical - nodes[i][j].loc.y) * factor_y))
-                          , tuple(Point2D(nodes[i][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i][j - 1].loc.y) * factor_y))
-                          , tuple(Point2D(nodes[i + 1][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i + 1][j - 1].loc.y) * factor_y))
-                          , tuple(Point2D(nodes[i+1][j].loc.x * factor_x, (grid_count_vertical - nodes[i+1][j].loc.y) * factor_y))]
-                      , fill=colour[(0 if i % 2 == 0 else 2) + (j % 2)], outline="black")
-            '''
+def poly_draw_for_maxflow(filename, im_size, nodes, grid_count_horizontal, grid_count_vertical):
+    # Create an empty image
+    count_concave = 0
+
+    factor_x = int(im_size[0] / grid_count_horizontal)
+    factor_y = int(im_size[1] / grid_count_vertical)
+
+    img = Image.new('RGB', (grid_count_horizontal * factor_x, grid_count_vertical * factor_y), color=(73, 109, 137))
+    d = ImageDraw.Draw(img)
+    # Define a set of random color to color the faces
+    colour = ["red", "blue", "green", "yellow", "purple", "orange", "white", "black"]
+    # this is the factor to scale up the image
+
+    # Draw all the faces
+
+    for i in range(grid_count_horizontal):
+        for j in range(grid_count_vertical, 0, -1):
+            pol = Polygon(Point2D(nodes[i][j].loc.x, (grid_count_vertical - nodes[i][j].loc.y)),
+                          Point2D(nodes[i][j - 1].loc.x, (grid_count_vertical - nodes[i][j - 1].loc.y)),
+                          Point2D(nodes[i + 1][j - 1].loc.x, (grid_count_vertical - nodes[i + 1][j - 1].loc.y)),
+                          Point2D(nodes[i+1][j].loc.x, (grid_count_vertical - nodes[i+1][j].loc.y)))
+            area = abs(pol.area)
+            if not pol.is_convex():
+                count_concave += 1
+
             d.polygon(
                 [tuple(Point2D(nodes[i][j].loc.x * factor_x, (grid_count_vertical - nodes[i][j].loc.y) * factor_y))
                     , tuple(Point2D(nodes[i][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i][j - 1].loc.y) * factor_y))
@@ -809,12 +904,13 @@ def poly_draw(filename, it, im_size, nodes, grid_count_horizontal, grid_count_ve
                 , fill="black", outline="cyan")
             #d.text(Point2D(nodes[i][j].loc.x * factor_x,
             #              (grid_count_vertical - nodes[i][j].loc.y) * factor_y), str(i)+ "_" +str(j))
-    imagestring = 'output//' + filename + '_table_cartogram-' + str(grid_count_horizontal) + '_' + str(grid_count_vertical) \
-                  + ' iterations' + str((it)) + '.png'
+    imagestring = filename
     img.save(imagestring)
+    print("\nNumber of Concave polygon : " + str(count_concave))
 
 def poly_draw_color(filename, it, im_size, nodes, maxColorListByGrid, grid_count_horizontal, grid_count_vertical):
     # Create an empty image
+    count_concave = 0
 
     factor_x = int(im_size[0] / grid_count_horizontal)
     factor_y = int(im_size[1] / grid_count_vertical)
@@ -834,6 +930,8 @@ def poly_draw_color(filename, it, im_size, nodes, maxColorListByGrid, grid_count
                           Point2D(nodes[i + 1][j - 1].loc.x, (grid_count_vertical - nodes[i + 1][j - 1].loc.y)),
                           Point2D(nodes[i+1][j].loc.x, (grid_count_vertical - nodes[i+1][j].loc.y)))
             area = abs(pol.area)
+            if not pol.is_convex():
+                count_concave += 1
 
             if area > imp_cell_threshold:
                 colour = ["green", "yellow"]
@@ -850,9 +948,11 @@ def poly_draw_color(filename, it, im_size, nodes, maxColorListByGrid, grid_count
     imagestring = 'output//' + filename + '_table_weighted_cartogram-' + str(grid_count_horizontal) + '_' + str(grid_count_vertical) \
                   + ' iterations' + str((it)) + '.png'
     img.save(imagestring)
+    print("\nNumber of Concave polygon : " + str(count_concave))
 
 def poly_draw_top_to_bottom(filename, im_size, nodes, grid_count_horizontal, grid_count_vertical):
     # Create an empty image
+    count_concave = 0
 
     factor_x = int(im_size[0] / grid_count_horizontal)
     factor_y = int(im_size[1] / grid_count_vertical)
@@ -864,6 +964,14 @@ def poly_draw_top_to_bottom(filename, im_size, nodes, grid_count_horizontal, gri
 
     for i in range(grid_count_horizontal):
         for j in range(grid_count_vertical):
+            pol = Polygon(Point2D(nodes[i][j].loc.x, nodes[i][j].loc.y),
+                          Point2D(nodes[i][j + 1].loc.x, nodes[i][j + 1].loc.y),
+                          Point2D(nodes[i + 1][j + 1].loc.x, nodes[i + 1][j + 1].loc.y),
+                          Point2D(nodes[i + 1][j].loc.x, nodes[i + 1][j].loc.y))
+
+            if not pol.is_convex():
+                count_concave += 1
+
             d.polygon(
                 [tuple(Point2D(nodes[i][j].loc.x * factor_x, nodes[i][j].loc.y * factor_y))
                     , tuple(Point2D(nodes[i][j + 1].loc.x * factor_x, nodes[i][j + 1].loc.y * factor_y))
@@ -875,6 +983,7 @@ def poly_draw_top_to_bottom(filename, im_size, nodes, grid_count_horizontal, gri
         grid_count_vertical) + '.png'
     imagestring = 'output//' + actualFileName
     img.save(imagestring)
+    print("\nNumber of Concave polygon : " + str(count_concave))
     return actualFileName
 ################# Polygon Draw ####################################
 
@@ -957,22 +1066,40 @@ def imageDraw(input_image, nodes, filename, grid_count_horizontal, grid_count_ve
 
     img.save('output/' + filename + '.png', 'PNG')
 
+def imageDrawForMaxFlow(input_image, nodes, filename, grid_count_horizontal, grid_count_vertical):
+    output_image_size = input_image.size
+    factor_x = int(output_image_size[0] / grid_count_horizontal)
+    factor_y = int(output_image_size[1] / grid_count_vertical)
+
+    dst = []
+    for i in range(grid_count_horizontal+1):
+        for j in range(grid_count_vertical, -1, -1):
+            dst.append([m.ceil(nodes[i][j].loc.x * factor_x), m.ceil((grid_count_vertical - nodes[i][j].loc.y) * factor_y)])
+
+    dst = np.array(dst)
+
+    src = []
+
+    # print(output_image_size)
+    for i in range(grid_count_horizontal + 1):
+        for j in range(grid_count_vertical + 1):
+            block_width = input_image.size[0] / grid_count_horizontal
+            block_height = input_image.size[1] / grid_count_vertical
+            upper_left_x = i * block_width
+            upper_left_y = j * block_height
+            src.append([m.ceil(upper_left_x), m.ceil(upper_left_y)])
+    src = np.array(src)
+    tform = PiecewiseAffineTransform()
+    tform.estimate(dst, src)
+    out = warp(input_image, tform, output_shape=(output_image_size[0], output_image_size[1]))
+
+    plt.imsave(filename, out)
+    return filename
+
 def newImageDraw(input_image, nodes, filename, grid_count_horizontal, grid_count_vertical):
     output_image_size = input_image.size
     factor_x = int(output_image_size[0] / grid_count_horizontal)
     factor_y = int(output_image_size[1] / grid_count_vertical)
-    '''
-    dst = []
-    for i in range(grid_count_horizontal + 1):
-        for j in range(grid_count_vertical + 1):
-            p = nodes[i][j].loc
-            # print(p[0]*factor_x)
-            # print(p[1]*factor_y)
-            dst.append([m.ceil(p[0] * factor_x), m.ceil(p[1] * factor_y)])
-    # print(dst)
-    # print(np.array())
-    dst = np.array(dst)
-    '''
 
     dst = []
     for i in range(grid_count_horizontal+1):
@@ -1192,6 +1319,114 @@ def imageDrawBrighnessChannelTopToBottom(input_img_file, nodes, weights, filenam
     out = out.convert("RGBA")
     out.save(output_path, 'PNG')
     return output_path
+
+
+def getWeightForPixel(output_image_size, i_array, j_array, grid_count_horizontal, grid_count_vertical, nodes, weights,
+                      thread_count):
+    points_array = []
+
+    for i in i_array:
+        for j in j_array:
+
+            y_coord = i / output_image_size[0] * grid_count_horizontal
+            x_coord = j / output_image_size[1] * grid_count_vertical
+
+            is_within_polygon = False
+            is_on_top_polygon = 1000
+
+            for x_grid in range(grid_count_horizontal):
+                for y_grid in range(grid_count_vertical):
+
+                    # p_top_left = nodes[x_grid][y_grid].loc
+                    # p_top_right = nodes[x_grid + 1][y_grid].loc
+                    # p_bottom_right = nodes[x_grid + 1][y_grid + 1].loc
+                    # p_bottom_left = nodes[x_grid][y_grid + 1].loc
+
+                    p_top_left = Point2D(nodes[x_grid][y_grid].loc.x,
+                                         (grid_count_vertical - nodes[x_grid][y_grid].loc.y))
+                    p_top_right = Point2D(nodes[x_grid + 1][y_grid].loc.x,
+                                          (grid_count_vertical - nodes[x_grid + 1][y_grid].loc.y))
+                    p_bottom_right = Point2D(nodes[x_grid + 1][y_grid + 1].loc.x,
+                                             (grid_count_vertical - nodes[x_grid + 1][y_grid + 1].loc.y))
+                    p_bottom_left = Point2D(nodes[x_grid][y_grid + 1].loc.x,
+                                            (grid_count_vertical - nodes[x_grid][y_grid + 1].loc.y))
+
+                    poly = Polygon((p_top_left[0], (p_top_left[1])),
+                                   (p_top_right[0], (p_top_right[1])),
+                                   (p_bottom_right[0], (p_bottom_right[1])),
+                                   (p_bottom_left[0], (p_bottom_left[1])))
+
+                    is_within_polygon = poly.encloses_point(Point(x_coord, y_coord))
+                    is_on_top_polygon = poly.distance(Point(x_coord, y_coord))
+
+                    if is_within_polygon or is_on_top_polygon <= 0:
+                        if thread_count == 0:
+                            print("(Thread,i,j):(" + str(thread_count) + "," + str(i) + "," + str(j) + ")")
+                        points_array.append([i, j, weights[grid_count_horizontal - 1 - y_grid, x_grid]])
+
+                    if is_within_polygon or is_on_top_polygon <= 0:
+                        break
+                if is_within_polygon or is_on_top_polygon <= 0:
+                    break
+
+    print("Thread : " + str(thread_count))
+    return points_array
+
+
+def imageDrawLightChannelTopToBottom_HLS(input_img_file, nodes, weights, filename, grid_count_horizontal,
+                                         grid_count_vertical):
+    input_image = Image.open(input_img_file)
+    hls = create_hls_array(input_image)
+
+    output_image_size = input_image.size
+
+    cpu_count = mp.cpu_count()
+    pool = mp.Pool(cpu_count)
+    thread_result = []
+
+    left_cpu_count = cpu_count
+    x_pixel_left = output_image_size[0]
+    x_start = 0
+
+    for th in range(cpu_count):
+        x_pixels_count = m.ceil(x_pixel_left * 1.00 / left_cpu_count)
+
+        thread_result.append(pool.apply_async(getWeightForPixel,
+                                              args=(output_image_size, range(x_start, x_start + x_pixels_count),
+                                                    range(output_image_size[1]),
+                                                    grid_count_horizontal, grid_count_vertical, nodes,
+                                                    weights, th,)))
+        left_cpu_count = left_cpu_count - 1
+        x_pixel_left = x_pixel_left - x_pixels_count
+        x_start = x_start + x_pixels_count
+
+    pool.close()
+    pool.join()
+
+    for th in range(cpu_count):
+        val_array = thread_result[th]._value
+        for count in range(len(val_array)):
+            index_x = val_array[count][0]
+            index_y = val_array[count][1]
+            pred_weight_val = val_array[count][2]
+
+            # hls[index_x, index_y][1] = pred_weight_val
+
+            percentage = 0.25
+            actual_val = hls[index_x, index_y][1]
+            if pred_weight_val >= actual_val:
+                hls[index_x, index_y][1] = actual_val + pred_weight_val * percentage
+            else:
+                hls[index_x, index_y][1] = actual_val - pred_weight_val * percentage
+
+    output_path = 'output/' + filename + '.png'
+    # out = out.convert("RGBA")
+    # out.save(output_path, 'PNG')
+
+    new_image = image_from_hls_array(hls)
+    new_image.save(output_path)
+
+    return output_path
 ################ image drawing ####################################
 
 ################ Shape File Generation ############################
@@ -1265,4 +1500,110 @@ def datGenMaxFlowGeneration(grid, values, nodes, output_file_name):
     out_weight_file.close()
     out_boundary_file.close()
 
+
+def create_hls_array(image):
+    pixels = image.load()
+    hls_array = np.empty(shape=(image.height, image.width, 3), dtype=float)
+
+    for row in range(0, image.height):
+        for column in range(0, image.width):
+            rgb = pixels[column, row]
+            hls = colorsys.rgb_to_hls(rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0)
+            hls_array[row, column, 0] = hls[0]
+            # hls_array[row, column, 1] = 100*(2**(2.5*(hls[1])))
+            hls_array[row, column, 1] = hls[1]
+            hls_array[row, column, 2] = hls[2]
+    return hls_array
+
+
+def image_from_hls_array(hls_array):
+    new_image = Image.new("RGB", (hls_array.shape[1], hls_array.shape[0]))
+
+    for row in range(0, new_image.height):
+        for column in range(0, new_image.width):
+            rgb = colorsys.hls_to_rgb(hls_array[row, column, 0],
+                                      hls_array[row, column, 1],
+                                      hls_array[row, column, 2])
+            rgb = (int(rgb[0] * 255), int(rgb[1] * 255), int(rgb[2] * 255))
+            new_image.putpixel((column, row), rgb)
+
+    return new_image
+
+
 ################ Dat Gen - Max Flow generation ####################
+
+def imageDrawLightChannelTopToBottom_HLS_new(input_img_file, nodes, values, filename, grid_count_horizontal,
+                                             grid_count_vertical):
+    # Create an empty image
+    input_image = Image.open(input_img_file)
+    output_image_size = input_image.size
+
+    factor_x = int(output_image_size[0] / grid_count_horizontal)
+    factor_y = int(output_image_size[1] / grid_count_vertical)
+
+    img = Image.new('RGB', (grid_count_horizontal * factor_x, grid_count_vertical * factor_y), color=(73, 109, 137))
+    d = ImageDraw.Draw(img)
+    # Define a set of random color to color the faces
+    colour = ["red", "blue", "green", "yellow", "purple", "orange", "white", "black"]
+    # this is the factor to scale up the image
+
+    max_val = np.max(values)
+    min_val = np.min(values)
+    # Draw all the faces
+
+    for i in range(grid_count_horizontal):
+        for j in range(grid_count_vertical, 0, -1):
+            color_val = 0 + int((values[i][j - 1] - min_val) / (max_val - min_val) * 255.00)
+            color_hex = "#{:02x}{:02x}{:02x}".format(color_val,
+                                                     color_val,
+                                                     color_val)
+
+            d.polygon(
+                [tuple(Point2D(nodes[i][j].loc.x * factor_x, (grid_count_vertical - nodes[i][j].loc.y) * factor_y))
+                    , tuple(
+                    Point2D(nodes[i][j - 1].loc.x * factor_x, (grid_count_vertical - nodes[i][j - 1].loc.y) * factor_y))
+                    , tuple(Point2D(nodes[i + 1][j - 1].loc.x * factor_x,
+                                    (grid_count_vertical - nodes[i + 1][j - 1].loc.y) * factor_y))
+                    , tuple(Point2D(nodes[i + 1][j].loc.x * factor_x,
+                                    (grid_count_vertical - nodes[i + 1][j].loc.y) * factor_y))]
+                , fill=color_hex)
+
+    imagestring = 'output//' + filename + '_table_cartogram-' + str(grid_count_horizontal) + '_' \
+                  + str(grid_count_vertical) + '.png'
+    img.save(imagestring)
+
+    img_blurred = img.filter(ImageFilter.GaussianBlur(radius=10))
+
+    img_blurred.save('output/lightness_blurred_image.png')
+    image_contour = np.asarray(img_blurred)
+
+    image_contour = np.flipud(image_contour)
+    Z = image_contour[:, :, 0]
+
+    plt.contourf(Z, levels=30, cmap='RdGy')
+
+    plt.savefig('output/lightness_image.png')
+
+
+    hls = create_hls_array(input_image)
+    image_contour = np.flipud(image_contour)
+    for i in range(input_image.size[0]):  # for every col:
+        for j in range(input_image.size[1]):
+            percentage = 0.25
+            actual_val = hls[i, j][1]
+            pred_weight_val = image_contour[i, j][0] / 255.00
+
+            pred_score = actual_val + pred_weight_val * percentage
+            if pred_score > 1.00:
+                pred_score = 1.00
+
+            hls[i, j][1] = pred_score
+
+    output_path = 'output/' + filename + '.png'
+    # out = out.convert("RGBA")
+    # out.save(output_path, 'PNG')
+
+    new_image = image_from_hls_array(hls)
+    new_image.save(output_path)
+
+    return output_path

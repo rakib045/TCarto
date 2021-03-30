@@ -3,40 +3,62 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import make_blobs
 import pandas as pd
 
-filename = 'cluster_2'
+filename = 'cluster_4_data_points'
 grid_count = 64
-output_txt_file = "input/cluster_2_grid_64_64.txt"
+output_txt_file = "input/cluster_4_grid_64_64.txt"
 percentage_weight_for_empty_point = 0.75
 
 min_x_axis = 0
-max_x_axis = 12
+max_x_axis = 1024
 min_y_axis = 0
-max_y_axis = 12
+max_y_axis = 1024
 
-centers1 = [(3, 3)]
-centers2 = [(8, 8)]
-centers3 = [(3, 8)]
-centers4 = [(4, 7)]
+scale = 100
+centers1 = [(2.5, 2.5)]
+centers2 = [(7.5, 7.5)]
+centers3 = [(2.5, 7.5)]
+centers4 = [(4, 6)]
 
 print('Data is generating ...')
 X1, y1 = make_blobs(n_samples=500, centers=centers1, n_features=2, cluster_std=0.3, random_state=42,)
 X2, y2 = make_blobs(n_samples=200, centers=centers2, n_features=2, cluster_std=0.6, random_state=42,)
-X3, y3 = make_blobs(n_samples=100, centers=centers3, n_features=2, cluster_std=0.45, random_state=42,)
-X4, y4 = make_blobs(n_samples=100, centers=centers4, n_features=2, cluster_std=0.45, random_state=42,)
+X3, y3 = make_blobs(n_samples=120, centers=centers3, n_features=2, cluster_std=0.55, random_state=42,)
+X4, y4 = make_blobs(n_samples=120, centers=centers4, n_features=2, cluster_std=0.55, random_state=42,)
+
+X1 = X1 * scale
+X2 = X2 * scale
+X3 = X3 * scale
+X4 = X4 * scale
+
 X = np.concatenate((X1, X2, X3, X4))
 #print(X[:])
 
-fig, ax = plt.subplots()
+#fig, ax = plt.subplots()
+fig = plt.figure(figsize=(5, 5))
 plt.scatter(X[:, 0], X[:, 1])
 plt.xlabel('X')
 plt.ylabel('Y')
-plt.xticks(np.arange(min_x_axis, max_x_axis, 1))
-plt.yticks(np.arange(min_y_axis, max_y_axis, 1))
+plt.xticks(np.arange(min_x_axis, max_x_axis, scale))
+plt.yticks(np.arange(min_y_axis, max_y_axis, scale))
 plt.show()
 fig.savefig("input/" + filename + "_image.png")
 
+#fig1, ax = plt.subplots()
+fig1 = plt.figure(figsize=(5, 5))
+plt.scatter(X1[:, 0], X1[:, 1], label='500 Samples')
+plt.scatter(X2[:, 0], X2[:, 1], label='200 Samples')
+plt.scatter(X3[:, 0], X3[:, 1], label='120 Samples')
+plt.scatter(X4[:, 0], X4[:, 1], label='120 Samples')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.xticks(np.arange(min_x_axis, max_x_axis, scale))
+plt.yticks(np.arange(min_y_axis, max_y_axis, scale))
+plt.legend()
+plt.show()
+fig1.savefig("input/" + filename + "_color_image.png")
 
-csv_filename = "input/" + filename + "_datapoints.csv"
+
+csv_filename = "input/" + filename + ".csv"
 with open(csv_filename, 'w') as f:
     for i in range(len(X[:])):
         f.write("{:.4f},".format(X[:, 0][i]) + "{:.4f}\n".format(X[:, 1][i]))
@@ -67,7 +89,7 @@ N = len(x)
 for j in range(grid_count_vertical):
     for i in range(grid_count_horizontal):
         weight = 0
-        print('(i, j)=(' + str(i) + ', ' + str(j) +')')
+        #print('(i, j)=(' + str(i) + ', ' + str(j) +')')
 
         x_low_lim = min_x + inc_x * i
         x_up_lim = min_x + inc_x * (i + 1)
